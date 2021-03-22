@@ -13,6 +13,7 @@ import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.example.android.camera2basic.camera2.util.NoOpCaptureCallback;
+import com.example.android.camera2basic.savehandlers.MediaRecorderSaveHandler;
 import com.example.android.camera2basic.util.NoOpCaptureSessionStateCallback;
 import com.example.android.camera2basic.util.NoOpStateCallback;
 import com.example.android.camera2basic.interfaces.ICameraDeviceHolder;
@@ -26,6 +27,7 @@ import com.example.android.camera2basic.preview.PreviewHandler;
 import com.example.android.camera2basic.savehandlers.ImageSaveHandler;
 import com.example.android.camera2basic.ui.AutoFitTextureView;
 import com.example.android.camera2basic.ui.DisplayParams;
+import com.example.android.camera2basic.videomode.VideoMode;
 import com.example.android.camera2basic.viewmodels.ControlPanel;
 
 import java.io.File;
@@ -45,7 +47,8 @@ public class CameraInteractor implements DefaultLifecycleObserver {
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread2;
     private Handler mBackgroundHandler2;
-    private File mFile;
+    private File mFile1;
+    private File mFile2;
     private IPreviewHandler backCameraPreviewHandler;
     private IPreviewHandler frontCameraPreviewHandler;
 
@@ -64,9 +67,10 @@ public class CameraInteractor implements DefaultLifecycleObserver {
         mDisplayParams = displayParams;
         mBackCamera = backCamera;
         mFrontCamera = frontCamera;
-        mFile = new File(mContext.getExternalFilesDir(null), "pic.mp4");
-        cameraModes.add(new PictureMode(backCameraPreviewHandler, frontCameraPreviewHandler, new ImageSaveHandler(mFile), mDisplayParams, backCamera, frontCamera));
-        //cameraModes.add(new VideoMode(backCameraPreviewHandler, new MediaRecorderSaveHandler(mFile), mDisplayParams, mBackCamera));
+        mFile1 = new File(mContext.getExternalFilesDir(null), "pic.mp4");
+        mFile2 = new File(mContext.getExternalFilesDir(null), "pic.mp4");
+        //cameraModes.add(new PictureMode(backCameraPreviewHandler, frontCameraPreviewHandler, new ImageSaveHandler(mFile), mDisplayParams, backCamera, frontCamera));
+        cameraModes.add(new VideoMode(backCameraPreviewHandler, frontCameraPreviewHandler, new MediaRecorderSaveHandler(mFile1), new MediaRecorderSaveHandler(mFile2), mDisplayParams, mBackCamera, mFrontCamera));
         currentMode = cameraModes.get(controlPanel.getDefaultMode());
     }
 
@@ -84,7 +88,7 @@ public class CameraInteractor implements DefaultLifecycleObserver {
             backCameraPreviewHandler.setSurfaceAvailableCallback(new IPreviewHandler.ISurfaceAvailableCallback() {
                 @Override
                 public void onSurfaceAvailable(int width, int height) {
-                    currentMode.onTextureAvailable();
+                    currentMode.onTextureAvailable(false);
                     mBackCamera.openCamera(mBackgroundHandler, new OpenDeviceCallback(mBackCamera));
                 }
 
@@ -118,12 +122,7 @@ public class CameraInteractor implements DefaultLifecycleObserver {
         mBackgroundThread2.start();
         mBackgroundHandler2 = new Handler(mBackgroundThread2.getLooper());
         for (ICameraMode mode : cameraModes) {
-
-            if(mode.isPhotoMode()){
-                mode.onHandlerAvailable(mBackgroundHandler, mBackgroundHandler2);
-            }else {
-                mode.onHandlerAvailable(mBackgroundHandler);
-            }
+            mode.onHandlerAvailable(mBackgroundHandler, mBackgroundHandler2);
         }
     }
 
@@ -162,7 +161,7 @@ public class CameraInteractor implements DefaultLifecycleObserver {
     }
 
     public void setMode(int position) {
-        currentMode.close();
+        /*currentMode.close();
         currentMode = cameraModes.get(position);
         if (currentMode.isPhotoMode()) {
             controlPanel.setButtonLabel("Capture");
@@ -174,7 +173,7 @@ public class CameraInteractor implements DefaultLifecycleObserver {
         currentMode.initialize(
                 new CaptureSessionStateCallback(),
                 new CaptureCallback(),
-                mBackCamera);
+                mBackCamera);*/
     }
 
     public List<String> getCameraModes() {
@@ -198,7 +197,7 @@ public class CameraInteractor implements DefaultLifecycleObserver {
 
         @Override
         public void onOpened() {
-            Log.d("Sundeep ", "Camera Opened");
+            Log.d("Sundeep ", "Camera Opened isFront " + mCameraDevice.isFront());
             currentMode.initialize(new CaptureSessionStateCallback(), new CaptureCallback(), mCameraDevice);
 
             if (mCameraDevice.equals(mBackCamera)) {
@@ -208,7 +207,7 @@ public class CameraInteractor implements DefaultLifecycleObserver {
                     frontCameraPreviewHandler.setSurfaceAvailableCallback(new IPreviewHandler.ISurfaceAvailableCallback() {
                         @Override
                         public void onSurfaceAvailable(int width, int height) {
-                            currentMode.onTextureAvailable();
+                            currentMode.onTextureAvailable(true);
                             mFrontCamera.openCamera(mBackgroundHandler2, new OpenDeviceCallback(mFrontCamera));
                         }
 
@@ -227,23 +226,10 @@ public class CameraInteractor implements DefaultLifecycleObserver {
         }
     }
 
-    /*private class SurfaceTextureListener implements IPreviewHandler.ISurfaceAvailableCallback {
-        @Override
-        public void onSurfaceAvailable(int width, int height) {
-            currentMode.onTextureAvailable();
-            mDeviceHolder.openCamera(mBackgroundHandler, new OpenDeviceCallback());
-        }
-
-        @Override
-        public void onSurfaceResized(int width, int height) {
-            currentMode.updateTransform();
-        }
-    }*/
-
     private class CaptureCallback extends NoOpCaptureCallback {
         @Override
         public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-            controlPanel.setFilePath(mFile.toString());
+            controlPanel.setFilePath(mFile1.toString());
         }
     }
 }

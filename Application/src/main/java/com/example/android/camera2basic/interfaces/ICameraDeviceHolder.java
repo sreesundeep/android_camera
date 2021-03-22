@@ -18,6 +18,8 @@ public interface ICameraDeviceHolder {
 
     boolean isFlashAvailable();
 
+    boolean isFront();
+
     CaptureRequest.Builder getLockFocusRequestBuilder(CaptureRequest.Builder mPreviewRequestBuilder);
 
     CaptureRequest.Builder getTriggerPrecaptureRequestBuilder(CaptureRequest.Builder mPreviewRequestBuilder);

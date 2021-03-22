@@ -50,12 +50,14 @@ public class CameraDeviceHolder extends CameraDevice.StateCallback implements IC
     private CameraCharacteristics mCharacteristics;
     private Context mContext;
     private IStateCallback mCallerStateCallback;
+    private boolean mIsFront;
 
-    public CameraDeviceHolder(Context context, String cameraId) throws CameraAccessException {
+    public CameraDeviceHolder(Context context, String cameraId, boolean isFront) throws CameraAccessException {
         mContext = context;
         mCameraId = cameraId;
         CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
         mCharacteristics = manager.getCameraCharacteristics(mCameraId);
+        mIsFront = isFront;
     }
 
     public boolean shouldSwapDimensions(int displayRotation) {
@@ -204,6 +206,11 @@ public class CameraDeviceHolder extends CameraDevice.StateCallback implements IC
         return available == null ? false : available;
     }
 
+    @Override
+    public boolean isFront() {
+        return mIsFront;
+    }
+
     public int getSensorOrientation() {
         return mCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
     }
@@ -250,8 +257,9 @@ public class CameraDeviceHolder extends CameraDevice.StateCallback implements IC
 
     @Override
     public void createCaptureSession(IPreviewHandler mPreviewSurface, ISaveHandler mSaveSurface, CaptureSessionHolder captureSessionHolder, Handler mHandler) {
+        Log.d("Sundeep ", "createCaptureSession isFront " + isFront());
         try {
-            mCameraDevice.createCaptureSession(Arrays.asList(mPreviewSurface.getTarget()), captureSessionHolder, mHandler);
+            mCameraDevice.createCaptureSession(Arrays.asList(mPreviewSurface.getTarget(), mSaveSurface.getTarget()), captureSessionHolder, mHandler);
         } catch (CameraAccessException e) {
             throw new RuntimeException("Unable to access camera");
         }

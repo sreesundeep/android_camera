@@ -53,7 +53,6 @@ public class PictureMode implements IPhotoMode {
             CameraCaptureSession.CaptureCallback callerCaptureCallback,
             ICameraDeviceHolder cameraDeviceHolder) {
         if (cameraDeviceHolder.equals(mBackCamera)) {
-            Log.d("Sundeep ", "initialize picture mode BACK");
             mBackCameraPreviewHandler.initialize();
             mBackCameraCaptureSessionHolder =
                 new CaptureSessionHolder(
@@ -116,18 +115,13 @@ public class PictureMode implements IPhotoMode {
     }
 
     @Override
-    public void onHandlerAvailable(Handler handler) {
-        //mBackCameraBackgroundHandler = handler;
-    }
-
-    @Override
     public void onHandlerAvailable(Handler handler1, Handler handler2) {
         mBackCameraBackgroundHandler = handler1;
         mFrontCameraBackgroundHandler = handler2;
     }
 
     @Override
-    public void onTextureAvailable() {
+    public void onTextureAvailable(boolean isFront) {
         setUpCameraOutputs(mDisplayParams.getOrientation(), mSaveHandler, mBackCameraPreviewHandler, mBackCamera);
         mBackCameraPreviewHandler.configureTransform(mDisplayParams.getRotation());
     }

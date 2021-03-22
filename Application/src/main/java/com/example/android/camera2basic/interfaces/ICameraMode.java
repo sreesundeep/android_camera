@@ -11,11 +11,9 @@ public interface ICameraMode {
 
     void close();
 
-    void onHandlerAvailable(Handler handler);
-
     void onHandlerAvailable(Handler handler1, Handler handler2);
 
-    void onTextureAvailable();
+    void onTextureAvailable(boolean isFront);
 
     void updateTransform();
 

@@ -2,6 +2,7 @@ package com.example.android.camera2basic.savehandlers;
 
 import android.media.MediaRecorder;
 import android.os.Handler;
+import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 
@@ -27,6 +28,7 @@ public class MediaRecorderSaveHandler implements IVideoSaveHandler {
 
     @Override
     public void initialize(Handler handler, Size largest) {
+        Log.d("Sundeep", "MediaRecorderSaveHandler initialize");
         try {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);

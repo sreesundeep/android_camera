@@ -18,7 +18,7 @@ public class CameraProvider {
                 // We don't use a front facing camera in this sample.
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
-                    return new CameraDeviceHolder(context, cameraId);
+                    return new CameraDeviceHolder(context, cameraId, false);
                 }
             }
         } catch (CameraAccessException e) {
@@ -35,7 +35,7 @@ public class CameraProvider {
                 // We don't use a front facing camera in this sample.
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
-                    return new CameraDeviceHolder(context, cameraId);
+                    return new CameraDeviceHolder(context, cameraId, true);
                 }
             }
         } catch (CameraAccessException e) {

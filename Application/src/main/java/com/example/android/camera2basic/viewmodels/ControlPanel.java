@@ -71,6 +71,6 @@ public class ControlPanel implements ModeSwitchScrollView.SelectListener {
 
     @Override
     public void onSelect(int beforePosition, int position) {
-        mCameraInteractor.setMode(position);
+        //mCameraInteractor.setMode(position);
     }
 }

@@ -2,6 +2,7 @@ package com.example.android.camera2basic.videomode;
 
 import android.hardware.camera2.CameraCaptureSession;
 import android.os.Handler;
+import android.util.Log;
 import android.util.Size;
 
 import com.example.android.camera2basic.interfaces.ICameraDeviceHolder;
@@ -19,96 +20,132 @@ import com.example.android.camera2basic.interfaces.IVideoSaveHandler;
 import java.util.Arrays;
 
 public class VideoMode implements IVideoMode {
-    private final IPreviewHandler mPreviewHandler;
-    private final IVideoSaveHandler mSaveHandler;
+    private final IPreviewHandler mBackPreviewHandler;
+    private final IPreviewHandler mFrontPreviewHandler;
+    private final IVideoSaveHandler mBackSaveHandler;
+    private final IVideoSaveHandler mFrontSaveHandler;
     private Handler mBackgroundHandler;
+    private Handler mBackgroundHandler2;
     private final DisplayParams mDisplayParams;
-    private final ICameraDeviceHolder mDeviceHolder;
-    private VideoCaptureSessionCallback mCaptureCallback;
+    private final ICameraDeviceHolder mBackCamera;
+    private final ICameraDeviceHolder mFrontCamera;
+    private VideoCaptureSessionCallback mBackCaptureCallback;
+    private VideoCaptureSessionCallback mFrontCaptureCallback;
     private boolean mRecording = false;
-    private ICaptureSessionHolder mCaptureSessionHolder;
+    private ICaptureSessionHolder mBackCaptureSessionHolder;
+    private ICaptureSessionHolder mFrontCaptureSessionHolder;
 
-    public VideoMode(IPreviewHandler previewHandler, IVideoSaveHandler saveHandler, DisplayParams displayParams, ICameraDeviceHolder deviceHolder) {
-        mPreviewHandler = previewHandler;
-        mSaveHandler = saveHandler;
+    public VideoMode(IPreviewHandler backPreviewHandler, IPreviewHandler frontPreviewHandler, IVideoSaveHandler backSaveHandler, IVideoSaveHandler frontSaveHandler, DisplayParams displayParams, ICameraDeviceHolder backCamera, ICameraDeviceHolder frontCamera) {
+        mBackPreviewHandler = backPreviewHandler;
+        mFrontPreviewHandler = frontPreviewHandler;
+        mBackSaveHandler = backSaveHandler;
+        mFrontSaveHandler = frontSaveHandler;
         mDisplayParams = displayParams;
-        mDeviceHolder = deviceHolder;
+        mBackCamera = backCamera;
+        mFrontCamera = frontCamera;
     }
 
     @Override
     public void initialize(
-            ISessionStateCallback captureSessionStateCallback,
-            CameraCaptureSession.CaptureCallback callerCaptureCallback,
-            ICameraDeviceHolder cameraDeviceHolder) {
-        mPreviewHandler.initialize();
-        mCaptureSessionHolder =
+        ISessionStateCallback captureSessionStateCallback,
+        CameraCaptureSession.CaptureCallback callerCaptureCallback,
+        ICameraDeviceHolder cameraDeviceHolder) {
+        Log.d("Sundeep", "initialize isFront " + cameraDeviceHolder.isFront());
+        if (cameraDeviceHolder.isFront()) {
+            mFrontPreviewHandler.initialize();
+            mFrontCaptureSessionHolder =
                 new CaptureSessionHolder(
-                        mDeviceHolder, mPreviewHandler, mSaveHandler, mBackgroundHandler);
-        ComboCaptureSessionStateCallback comboCaptureSessionStateCallback =
+                    mFrontCamera, mFrontPreviewHandler, mFrontSaveHandler, mBackgroundHandler2);
+            ComboCaptureSessionStateCallback comboCaptureSessionStateCallback =
                 new ComboCaptureSessionStateCallback(
-                        Arrays.asList(new PreviewStartTask(), captureSessionStateCallback));
-        mCaptureCallback =
+                    Arrays.asList(new PreviewStartTask(cameraDeviceHolder.isFront()), captureSessionStateCallback));
+            mFrontCaptureCallback =
                 new VideoCaptureSessionCallback(
-                        mCaptureSessionHolder,
-                        mDeviceHolder,
-                        mDisplayParams.getRotation(),
-                        mSaveHandler,
-                        callerCaptureCallback);
-        mCaptureSessionHolder.createSession(comboCaptureSessionStateCallback);
-    }
-
-    @Override
-    public void onHandlerAvailable(Handler handler) {
-        mBackgroundHandler = handler;
+                    mFrontCaptureSessionHolder,
+                    mFrontCamera,
+                    mDisplayParams.getRotation(),
+                    mFrontSaveHandler,
+                    callerCaptureCallback);
+            mFrontCaptureSessionHolder.createSession(comboCaptureSessionStateCallback);
+        } else {
+            mBackPreviewHandler.initialize();
+            mBackCaptureSessionHolder =
+                new CaptureSessionHolder(
+                    mBackCamera, mBackPreviewHandler, mBackSaveHandler, mBackgroundHandler);
+            ComboCaptureSessionStateCallback comboCaptureSessionStateCallback =
+                new ComboCaptureSessionStateCallback(
+                    Arrays.asList(new PreviewStartTask(cameraDeviceHolder.isFront()), captureSessionStateCallback));
+            mBackCaptureCallback =
+                new VideoCaptureSessionCallback(
+                    mBackCaptureSessionHolder,
+                    mBackCamera,
+                    mDisplayParams.getRotation(),
+                    mBackSaveHandler,
+                    callerCaptureCallback);
+            mBackCaptureSessionHolder.createSession(comboCaptureSessionStateCallback);
+        }
     }
 
     @Override
     public void onHandlerAvailable(Handler handler1, Handler handler2) {
-
+        mBackgroundHandler = handler1;
+        mBackgroundHandler2 = handler2;
     }
 
     @Override
     public void close() {
-        if (mCaptureCallback != null) {
-            mCaptureCallback.close();
+        if (mBackCaptureCallback != null) {
+            mBackCaptureCallback.close();
         }
-        mCaptureSessionHolder.close();
-        mPreviewHandler.close();
-        mSaveHandler.close();
+        mBackCaptureSessionHolder.close();
+        mBackPreviewHandler.close();
+        mBackSaveHandler.close();
+
+        if (mFrontCaptureCallback != null) {
+            mFrontCaptureCallback.close();
+        }
+        mFrontCaptureSessionHolder.close();
+        mFrontPreviewHandler.close();
+        mFrontSaveHandler.close();
     }
 
     @Override
-    public void onTextureAvailable() {
-        setUpCameraOutputs(mDisplayParams.getOrientation(), mSaveHandler, mPreviewHandler);
-        mPreviewHandler.configureTransform(mDisplayParams.getRotation());
+    public void onTextureAvailable(boolean isFront) {
+        // Front
+        setUpCameraOutputs(mDisplayParams.getOrientation(), mFrontSaveHandler, mFrontPreviewHandler);
+        mFrontPreviewHandler.configureTransform(mDisplayParams.getRotation());
+
+        // Back
+        setUpCameraOutputs(mDisplayParams.getOrientation(), mBackSaveHandler, mBackPreviewHandler);
+        mBackPreviewHandler.configureTransform(mDisplayParams.getRotation());
     }
 
     @Override
     public void updateTransform() {
-        mPreviewHandler.configureTransform(mDisplayParams.getRotation());
+        mBackPreviewHandler.configureTransform(mDisplayParams.getRotation());
     }
 
     private void setUpCameraOutputs(int orientation, ISaveHandler saveHandler, IPreviewHandler previewHandler) {
         // For still image captures, we use the largest available size.
-        Size largest = mDeviceHolder.getLargestSize(isPhotoMode());
+        Size largest = mBackCamera.getLargestSize(isPhotoMode());
         saveHandler.initialize(mBackgroundHandler, largest);
         // Find out if we need to swap dimension to get the preview size relative to sensor
         // coordinate.
-        boolean swappedDimensions = mDeviceHolder.shouldSwapDimensions(mDisplayParams.getRotation());
-        previewHandler.calculateBestPreviewSize(largest, swappedDimensions, mDisplayParams.getDisplaySize(), orientation, mDeviceHolder.getPreviewSizes());
+        boolean swappedDimensions = mBackCamera.shouldSwapDimensions(mDisplayParams.getRotation());
+        previewHandler.calculateBestPreviewSize(largest, swappedDimensions, mDisplayParams.getDisplaySize(), orientation, mBackCamera.getPreviewSizes());
     }
 
     @Override
     public void startRecording() {
         mRecording = true;
-        mSaveHandler.startRecording();
+        mBackSaveHandler.startRecording();
     }
 
     @Override
     public void stopRecording() {
         if (mRecording) {
             mRecording = false;
-            mSaveHandler.stopRecording();
+            mBackSaveHandler.stopRecording();
         }
     }
 
@@ -128,9 +165,21 @@ public class VideoMode implements IVideoMode {
     }
 
     private class PreviewStartTask extends NoOpCaptureSessionStateCallback {
+        private boolean mIsFront;
+
+        PreviewStartTask(boolean isFront) {
+            mIsFront = isFront;
+        }
+
         @Override
         public void onConfigured() {
-            mCaptureCallback.createPreviewRequest(mPreviewHandler.getTarget(), mSaveHandler.getTarget());
+            Log.d("Sundeep", "CaptureSession Configured isFront " + mIsFront);
+            if (mIsFront) {
+                mFrontCaptureCallback.createPreviewRequest(mFrontPreviewHandler.getTarget(), mFrontSaveHandler.getTarget());
+            } else {
+                mBackCaptureCallback.createPreviewRequest(mBackPreviewHandler.getTarget(), mBackSaveHandler.getTarget());
+
+            }
         }
     }
 }
