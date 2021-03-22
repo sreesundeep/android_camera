@@ -6,14 +6,9 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 
 import com.example.android.camera2basic.camera2.CameraDeviceHolder;
-import com.example.android.camera2basic.fake.FakeCameraDevice;
 import com.example.android.camera2basic.interfaces.ICameraDeviceHolder;
 
 public class CameraProvider {
-
-    public static ICameraDeviceHolder getFakeCamera(Context context) {
-        return new FakeCameraDevice(context);
-    }
 
     public static ICameraDeviceHolder getBackCamera(Context context) {
         CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);

@@ -55,8 +55,7 @@ public class Camera2BasicFragment extends Fragment
     };
     static final int REQUEST_VIDEO_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
-    private static final boolean USE_FAKE_CAMERA = false;
-    private AutoFitTextureView mFakeTextureView;
+    private AutoFitTextureView mFrontTextureView;
     private AutoFitTextureView mBackTextureView;
     private CameraInteractor mInteractor;
     private Button mButton;
@@ -84,7 +83,7 @@ public class Camera2BasicFragment extends Fragment
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         view.findViewById(R.id.picture).setOnClickListener(this);
         view.findViewById(R.id.info).setOnClickListener(this);
-        mFakeTextureView = view.findViewById(R.id.faketexture);
+        mFrontTextureView = view.findViewById(R.id.fronttexture);
         mBackTextureView = view.findViewById(R.id.backtexture);
 
         // mGLSurfaceView = view.findViewById(R.id.gltexture);
@@ -106,7 +105,7 @@ public class Camera2BasicFragment extends Fragment
                 new CameraInteractor(
                         getContext(),
                         mBackTextureView,
-                        mFakeTextureView,
+                    mFrontTextureView,
                         new DisplayParams(
                                 getActivity().getWindowManager().getDefaultDisplay().getRotation(),
                                 getResources().getConfiguration().orientation,

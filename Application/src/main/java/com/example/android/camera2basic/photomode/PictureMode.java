@@ -20,31 +20,31 @@ import java.util.Arrays;
 
 public class PictureMode implements IPhotoMode {
     private final IPreviewHandler mBackCameraPreviewHandler;
-    private final IPreviewHandler mFakeCameraPreviewHandler;
+    private final IPreviewHandler mFrontCameraPreviewHandler;
     private final ISaveHandler mSaveHandler;
     private Handler mBackCameraBackgroundHandler;
-    private Handler mFakeCameraBackgroundHandler;
+    private Handler mFrontCameraBackgroundHandler;
     private final ICameraDeviceHolder mBackCamera;
-    private final ICameraDeviceHolder mFakeCamera;
+    private final ICameraDeviceHolder mFrontCamera;
     private final DisplayParams mDisplayParams;
     private PhotoCaptureSessionCallback mBackCaptureCallback;
-    private PhotoCaptureSessionCallback mFakeCaptureCallback;
+    private PhotoCaptureSessionCallback mFrontCaptureCallback;
     private ICaptureSessionHolder mBackCameraCaptureSessionHolder;
-    private ICaptureSessionHolder mFakeCameraCaptureSessionHolder;
+    private ICaptureSessionHolder mFrontCameraCaptureSessionHolder;
 
     public PictureMode(
             IPreviewHandler backCameraPreviewHandler,
-            IPreviewHandler fakeCameraPreviewHandler,
+            IPreviewHandler frontCameraPreviewHandler,
             ISaveHandler saveHandler,
             DisplayParams displayParams,
             ICameraDeviceHolder backCamera,
-            ICameraDeviceHolder fakeCamera) {
+            ICameraDeviceHolder frontCamera) {
         mBackCameraPreviewHandler = backCameraPreviewHandler;
-        mFakeCameraPreviewHandler = fakeCameraPreviewHandler;
+        mFrontCameraPreviewHandler = frontCameraPreviewHandler;
         mSaveHandler = saveHandler;
         mDisplayParams = displayParams;
         mBackCamera = backCamera;
-        mFakeCamera = fakeCamera;
+        mFrontCamera = frontCamera;
     }
 
     @Override
@@ -74,24 +74,24 @@ public class PictureMode implements IPhotoMode {
                     mDisplayParams.getRotation(),
                     mSaveHandler,
                     callerCaptureCallback);
-        } else if (cameraDeviceHolder.equals(mFakeCamera)) {
-            mFakeCameraPreviewHandler.initialize();
-            mFakeCameraCaptureSessionHolder =
+        } else if (cameraDeviceHolder.equals(mFrontCamera)) {
+            mFrontCameraPreviewHandler.initialize();
+            mFrontCameraCaptureSessionHolder =
                 new CaptureSessionHolder(
-                    mFakeCamera,
-                    mFakeCameraPreviewHandler,
+                    mFrontCamera,
+                    mFrontCameraPreviewHandler,
                     mSaveHandler,
-                    mFakeCameraBackgroundHandler);
+                    mFrontCameraBackgroundHandler);
             ComboCaptureSessionStateCallback comboBackCaptureSessionStateCallback =
                 new ComboCaptureSessionStateCallback(
                     Arrays.asList(
-                        new PreviewStartTask(mFakeCameraPreviewHandler),
+                        new PreviewStartTask(mFrontCameraPreviewHandler),
                         captureSessionStateCallback));
-            mFakeCameraCaptureSessionHolder.createSession(comboBackCaptureSessionStateCallback);
-            mFakeCaptureCallback =
+            mFrontCameraCaptureSessionHolder.createSession(comboBackCaptureSessionStateCallback);
+            mFrontCaptureCallback =
                 new PhotoCaptureSessionCallback(
-                    mFakeCameraCaptureSessionHolder,
-                    mFakeCamera,
+                    mFrontCameraCaptureSessionHolder,
+                    mFrontCamera,
                     mDisplayParams.getRotation(),
                     mSaveHandler,
                     callerCaptureCallback);
@@ -106,10 +106,10 @@ public class PictureMode implements IPhotoMode {
             mSaveHandler.close();
             mBackCaptureCallback = null;
 
-            mFakeCameraCaptureSessionHolder.close();
-            mFakeCameraPreviewHandler.close();
+            mFrontCameraCaptureSessionHolder.close();
+            mFrontCameraPreviewHandler.close();
             mSaveHandler.close();
-            mFakeCaptureCallback = null;
+            mFrontCaptureCallback = null;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -123,7 +123,7 @@ public class PictureMode implements IPhotoMode {
     @Override
     public void onHandlerAvailable(Handler handler1, Handler handler2) {
         mBackCameraBackgroundHandler = handler1;
-        mFakeCameraBackgroundHandler = handler2;
+        mFrontCameraBackgroundHandler = handler2;
     }
 
     @Override
@@ -184,7 +184,7 @@ public class PictureMode implements IPhotoMode {
             if (mCameraPreviewHandler.equals(mBackCameraPreviewHandler)) {
                 mBackCaptureCallback.createPreviewRequest(mCameraPreviewHandler.getTarget());
             }else{
-                mFakeCaptureCallback.createPreviewRequest(mCameraPreviewHandler.getTarget());
+                mFrontCaptureCallback.createPreviewRequest(mCameraPreviewHandler.getTarget());
             }
         }
     }

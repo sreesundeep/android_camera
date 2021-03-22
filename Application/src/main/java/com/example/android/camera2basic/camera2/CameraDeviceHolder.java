@@ -56,14 +56,6 @@ public class CameraDeviceHolder extends CameraDevice.StateCallback implements IC
         mCameraId = cameraId;
         CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
         mCharacteristics = manager.getCameraCharacteristics(mCameraId);
-        for (String camId : manager.getCameraIdList()) {
-            Log.d("Sundeep ", "****************************Camera id " + camId +" *********************************");
-            CameraCharacteristics chars = manager.getCameraCharacteristics(camId);
-            Range<Integer>[] fpsRanges = chars.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
-            for (Range<Integer> fps : fpsRanges) {
-                Log.d("Sundeep", " Fps range lower: " + fps.getLower() + " upper " + fps.getUpper());
-            }
-        }
     }
 
     public boolean shouldSwapDimensions(int displayRotation) {

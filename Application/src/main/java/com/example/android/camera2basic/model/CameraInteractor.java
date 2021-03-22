@@ -24,10 +24,8 @@ import com.example.android.camera2basic.opengl.CustomGLSurfaceView;
 import com.example.android.camera2basic.photomode.PictureMode;
 import com.example.android.camera2basic.preview.PreviewHandler;
 import com.example.android.camera2basic.savehandlers.ImageSaveHandler;
-import com.example.android.camera2basic.savehandlers.MediaRecorderSaveHandler;
 import com.example.android.camera2basic.ui.AutoFitTextureView;
 import com.example.android.camera2basic.ui.DisplayParams;
-import com.example.android.camera2basic.videomode.VideoMode;
 import com.example.android.camera2basic.viewmodels.ControlPanel;
 
 import java.io.File;
@@ -42,32 +40,32 @@ public class CameraInteractor implements DefaultLifecycleObserver {
     private List<ICameraMode> cameraModes = new ArrayList<>();
     private ICameraMode currentMode;
     private ICameraDeviceHolder mBackCamera;
-    private ICameraDeviceHolder mFakeCamera;
+    private ICameraDeviceHolder mFrontCamera;
     private HandlerThread mBackgroundThread;
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread2;
     private Handler mBackgroundHandler2;
     private File mFile;
     private IPreviewHandler backCameraPreviewHandler;
-    private IPreviewHandler fakeCameraPreviewHandler;
+    private IPreviewHandler frontCameraPreviewHandler;
 
     public CameraInteractor(
             Context context,
             AutoFitTextureView backTextureView,
-            AutoFitTextureView fakeTextureView,
+            AutoFitTextureView frontTextureView,
             DisplayParams displayParams,
             CustomGLSurfaceView customGLSurfaceView,
             ICameraDeviceHolder backCamera,
-            ICameraDeviceHolder fakeCamera) {
+            ICameraDeviceHolder frontCamera) {
         mContext = context;
         backCameraPreviewHandler = new PreviewHandler(backTextureView);
-        fakeCameraPreviewHandler = new PreviewHandler(fakeTextureView);
+        frontCameraPreviewHandler = new PreviewHandler(frontTextureView);
         // previewHandler = new OGLPreviewHandler(customGLSurfaceView);
         mDisplayParams = displayParams;
         mBackCamera = backCamera;
-        mFakeCamera = fakeCamera;
+        mFrontCamera = frontCamera;
         mFile = new File(mContext.getExternalFilesDir(null), "pic.mp4");
-        cameraModes.add(new PictureMode(backCameraPreviewHandler, fakeCameraPreviewHandler, new ImageSaveHandler(mFile), mDisplayParams, backCamera, fakeCamera));
+        cameraModes.add(new PictureMode(backCameraPreviewHandler, frontCameraPreviewHandler, new ImageSaveHandler(mFile), mDisplayParams, backCamera, frontCamera));
         //cameraModes.add(new VideoMode(backCameraPreviewHandler, new MediaRecorderSaveHandler(mFile), mDisplayParams, mBackCamera));
         currentMode = cameraModes.get(controlPanel.getDefaultMode());
     }
@@ -76,14 +74,14 @@ public class CameraInteractor implements DefaultLifecycleObserver {
     public void onResume(@NonNull LifecycleOwner owner) {
         startBackgroundThread();
 
-        if (fakeCameraPreviewHandler.isAvailable()) {
-            mFakeCamera.openCamera(mBackgroundHandler2, new OpenDeviceCallback(mFakeCamera));
+        if (frontCameraPreviewHandler.isAvailable()) {
+            mFrontCamera.openCamera(mBackgroundHandler2, new OpenDeviceCallback(mFrontCamera));
         } else {
-            fakeCameraPreviewHandler.setSurfaceAvailableCallback(new IPreviewHandler.ISurfaceAvailableCallback() {
+            frontCameraPreviewHandler.setSurfaceAvailableCallback(new IPreviewHandler.ISurfaceAvailableCallback() {
                 @Override
                 public void onSurfaceAvailable(int width, int height) {
                     currentMode.onTextureAvailable();
-                    mFakeCamera.openCamera(mBackgroundHandler2, new OpenDeviceCallback(mFakeCamera));
+                    mFrontCamera.openCamera(mBackgroundHandler2, new OpenDeviceCallback(mFrontCamera));
                 }
 
                 @Override
@@ -221,14 +219,14 @@ public class CameraInteractor implements DefaultLifecycleObserver {
             currentMode.initialize(new CaptureSessionStateCallback(), new CaptureCallback(), mCameraDevice);
 
             if (mCameraDevice.equals(mBackCamera)) {
-                if (fakeCameraPreviewHandler.isAvailable()) {
-                    mFakeCamera.openCamera(mBackgroundHandler2, new OpenDeviceCallback(mFakeCamera));
+                if (frontCameraPreviewHandler.isAvailable()) {
+                    mFrontCamera.openCamera(mBackgroundHandler2, new OpenDeviceCallback(mFrontCamera));
                 } else {
-                    fakeCameraPreviewHandler.setSurfaceAvailableCallback(new IPreviewHandler.ISurfaceAvailableCallback() {
+                    frontCameraPreviewHandler.setSurfaceAvailableCallback(new IPreviewHandler.ISurfaceAvailableCallback() {
                         @Override
                         public void onSurfaceAvailable(int width, int height) {
                             currentMode.onTextureAvailable();
-                            mFakeCamera.openCamera(mBackgroundHandler2, new OpenDeviceCallback(mFakeCamera));
+                            mFrontCamera.openCamera(mBackgroundHandler2, new OpenDeviceCallback(mFrontCamera));
                         }
 
                         @Override
