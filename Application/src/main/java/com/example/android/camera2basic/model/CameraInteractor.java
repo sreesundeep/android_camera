@@ -31,7 +31,9 @@ import com.example.android.camera2basic.videomode.VideoMode;
 import com.example.android.camera2basic.viewmodels.ControlPanel;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,8 +69,10 @@ public class CameraInteractor implements DefaultLifecycleObserver {
         mDisplayParams = displayParams;
         mBackCamera = backCamera;
         mFrontCamera = frontCamera;
-        mFile1 = new File(mContext.getExternalFilesDir(null), "pic.mp4");
-        mFile2 = new File(mContext.getExternalFilesDir(null), "pic.mp4");
+        String fileName1 = "FFC_Video_"+new SimpleDateFormat("MMddHHmmss").format(new Date())+".mp4";
+        mFile1 = new File(mContext.getExternalFilesDir(null), fileName1);
+        String fileName2 = "RFC_Video_"+new SimpleDateFormat("MMddHHmmss").format(new Date())+".mp4";
+        mFile2 = new File(mContext.getExternalFilesDir(null), fileName2);
         //cameraModes.add(new PictureMode(backCameraPreviewHandler, frontCameraPreviewHandler, new ImageSaveHandler(mFile), mDisplayParams, backCamera, frontCamera));
         cameraModes.add(new VideoMode(backCameraPreviewHandler, frontCameraPreviewHandler, new MediaRecorderSaveHandler(mFile1), new MediaRecorderSaveHandler(mFile2), mDisplayParams, mBackCamera, mFrontCamera));
         currentMode = cameraModes.get(controlPanel.getDefaultMode());
