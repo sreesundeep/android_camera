@@ -3,6 +3,7 @@ package com.example.android.camera2basic.interfaces;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
+import android.media.ImageReader;
 import android.os.Handler;
 import android.util.Size;
 import android.view.Surface;
@@ -40,5 +41,5 @@ public interface ICameraDeviceHolder {
 
     CaptureRequest.Builder createVideoCaptureRequest(Surface surface, Surface recordSurface) throws CameraAccessException;
 
-    void createCaptureSession(IPreviewHandler mPreviewSurface, ISaveHandler mSaveSurface, CaptureSessionHolder captureSessionHolder, Handler mHandler);
+    void createCaptureSession(IPreviewHandler mPreviewSurface, ISaveHandler mSaveSurface, ImageReader imageReader, CaptureSessionHolder captureSessionHolder, Handler mHandler);
 }

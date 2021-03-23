@@ -21,6 +21,8 @@ public abstract class BasePreviewHandler implements IPreviewHandler {
     static final int MAX_PREVIEW_HEIGHT = 1080;
     protected Size mPreviewSize;
     protected ISurfaceAvailableCallback mSurfaceAvailableCallback;
+    int mHeight = 1080;
+    int mWidth = 1920;
 
     public void calculateBestPreviewSize(Size largest, boolean swappedDimensions, Point displaySize, int orientation, Size[] outputSizes) {
         int rotatedPreviewWidth = swappedDimensions ? getViewHeight() : getViewWidth();
@@ -40,12 +42,25 @@ public abstract class BasePreviewHandler implements IPreviewHandler {
                 rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
                 maxPreviewHeight, largest);
         // We fit the aspect ratio of TextureView to the size of preview we picked.
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        /*if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
             setAspectRatio(mPreviewSize.getWidth(), mPreviewSize.getHeight());
         } else {
             setAspectRatio(
                     mPreviewSize.getHeight(), mPreviewSize.getWidth());
-        }
+        }*/
+        setAspectRatio(mPreviewSize.getWidth(), mPreviewSize.getWidth());
+        mWidth = mPreviewSize.getWidth();
+        mHeight = mPreviewSize.getHeight();
+    }
+
+    @Override
+    public int getWidth() {
+        return mWidth;
+    }
+
+    @Override
+    public int getHeight() {
+        return mHeight;
     }
 
     @Override

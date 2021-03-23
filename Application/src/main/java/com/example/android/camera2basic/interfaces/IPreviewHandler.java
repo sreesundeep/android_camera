@@ -13,6 +13,10 @@ public interface IPreviewHandler {
 
     void calculateBestPreviewSize(Size largest, boolean swappedDimensions, Point displaySize, int orientation, Size[] previewSizes);
 
+    int getWidth();
+
+    int getHeight();
+
     void close();
 
     void setSurfaceAvailableCallback(ISurfaceAvailableCallback callback);

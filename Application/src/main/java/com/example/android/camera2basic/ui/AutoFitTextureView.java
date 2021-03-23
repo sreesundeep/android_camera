@@ -17,6 +17,7 @@ package com.example.android.camera2basic.ui;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.TextureView;
 
 /**
@@ -52,6 +53,7 @@ public class AutoFitTextureView extends TextureView {
         }
         mRatioWidth = width;
         mRatioHeight = height;
+        Log.d("Sundeep", "setAspectRatio W: " + mRatioWidth + " H: " + mRatioHeight);
         requestLayout();
     }
 

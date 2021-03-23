@@ -11,6 +11,7 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.ImageReader;
 import android.os.Handler;
 import android.util.Log;
 import android.util.Range;
@@ -256,10 +257,15 @@ public class CameraDeviceHolder extends CameraDevice.StateCallback implements IC
     }
 
     @Override
-    public void createCaptureSession(IPreviewHandler mPreviewSurface, ISaveHandler mSaveSurface, CaptureSessionHolder captureSessionHolder, Handler mHandler) {
+    public void createCaptureSession(IPreviewHandler mPreviewSurface, ISaveHandler mSaveSurface, ImageReader imageReader, CaptureSessionHolder captureSessionHolder, Handler mHandler) {
         Log.d("Sundeep ", "createCaptureSession isFront " + isFront());
         try {
-            mCameraDevice.createCaptureSession(Arrays.asList(mPreviewSurface.getTarget(), mSaveSurface.getTarget()), captureSessionHolder, mHandler);
+            if (imageReader != null) {
+                mCameraDevice.createCaptureSession(Arrays.asList(mPreviewSurface.getTarget(), imageReader.getSurface(), mSaveSurface.getTarget()), captureSessionHolder, mHandler);
+            } else {
+                mCameraDevice.createCaptureSession(Arrays.asList(mPreviewSurface.getTarget(), mSaveSurface.getTarget()), captureSessionHolder, mHandler);
+            }
+
         } catch (CameraAccessException e) {
             throw new RuntimeException("Unable to access camera");
         }

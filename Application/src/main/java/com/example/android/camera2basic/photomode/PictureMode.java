@@ -59,7 +59,7 @@ public class PictureMode implements IPhotoMode {
                     mBackCamera,
                     mBackCameraPreviewHandler,
                     mSaveHandler,
-                    mBackCameraBackgroundHandler);
+                    mBackCameraBackgroundHandler, null);
             ComboCaptureSessionStateCallback comboBackCaptureSessionStateCallback =
                 new ComboCaptureSessionStateCallback(
                     Arrays.asList(
@@ -80,7 +80,7 @@ public class PictureMode implements IPhotoMode {
                     mFrontCamera,
                     mFrontCameraPreviewHandler,
                     mSaveHandler,
-                    mFrontCameraBackgroundHandler);
+                    mFrontCameraBackgroundHandler, null);
             ComboCaptureSessionStateCallback comboBackCaptureSessionStateCallback =
                 new ComboCaptureSessionStateCallback(
                     Arrays.asList(
