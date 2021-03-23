@@ -1,12 +1,16 @@
 package com.example.android.camera2basic.videomode;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraCaptureSession;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.Environment;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
 
@@ -22,8 +26,14 @@ import com.example.android.camera2basic.interfaces.ISaveHandler;
 import com.example.android.camera2basic.interfaces.IVideoMode;
 import com.example.android.camera2basic.interfaces.IVideoSaveHandler;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class VideoMode implements IVideoMode {
     private final IPreviewHandler mBackPreviewHandler;
@@ -37,13 +47,17 @@ public class VideoMode implements IVideoMode {
     private final ICameraDeviceHolder mFrontCamera;
     private VideoCaptureSessionCallback mBackCaptureCallback;
     private VideoCaptureSessionCallback mFrontCaptureCallback;
-    private boolean mRecording = false;
+    private boolean mRecording = true;
     private ICaptureSessionHolder mBackCaptureSessionHolder;
     private ICaptureSessionHolder mFrontCaptureSessionHolder;
     private ImageReader mFrontPreviewFrameReader;
     private ImageReader mBackPreviewFrameReader;
+    ConcurrentLinkedQueue<Bitmap> ffc_bitmap_queue = new ConcurrentLinkedQueue<>();
+    ConcurrentLinkedQueue<Bitmap> rfc_bitmap_queue = new ConcurrentLinkedQueue<>();
+    private Context mContext;
 
-    public VideoMode(IPreviewHandler backPreviewHandler, IPreviewHandler frontPreviewHandler, IVideoSaveHandler backSaveHandler, IVideoSaveHandler frontSaveHandler, DisplayParams displayParams, ICameraDeviceHolder backCamera, ICameraDeviceHolder frontCamera) {
+    public VideoMode(Context context, IPreviewHandler backPreviewHandler, IPreviewHandler frontPreviewHandler, IVideoSaveHandler backSaveHandler, IVideoSaveHandler frontSaveHandler, DisplayParams displayParams, ICameraDeviceHolder backCamera, ICameraDeviceHolder frontCamera) {
+        mContext = context;
         mBackPreviewHandler = backPreviewHandler;
         mFrontPreviewHandler = frontPreviewHandler;
         mBackSaveHandler = backSaveHandler;
@@ -150,13 +164,18 @@ public class VideoMode implements IVideoMode {
         Log.d("Sundeep", "prepareFrontPreviewFrameReader");
         mFrontPreviewFrameReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
         mFrontPreviewFrameReader.setOnImageAvailableListener(reader -> {
-            Log.d("Sundeep", "Front Frame");
+            // Log.d("Sundeep", "Front Frame");
             Image image = null;
             try {
                 image = reader.acquireLatestImage();
                 if (image != null) {
                     ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                     Bitmap bitmap = fromByteBuffer(buffer);
+                    if (mRecording) {
+                        ffc_bitmap_queue.add(bitmap);
+                        // mergeFrontAndBackCameraFrames
+                        mergeFrontAndBackCameraFrames();
+                    }
                     image.close();
                 }
             } catch (Exception e) {
@@ -168,18 +187,52 @@ public class VideoMode implements IVideoMode {
         Log.d("Sundeep", "prepareBackPreviewFrameReader");
         mBackPreviewFrameReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
         mBackPreviewFrameReader.setOnImageAvailableListener(reader -> {
-            Log.d("Sundeep", "Back Frame");
+            // Log.d("Sundeep", "Back Frame");
             Image image = null;
             try {
                 image = reader.acquireLatestImage();
                 if (image != null) {
                     ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                     Bitmap bitmap = fromByteBuffer(buffer);
+                    if (mRecording) {
+                        rfc_bitmap_queue.add(bitmap);
+                    }
                     image.close();
                 }
             } catch (Exception e) {
             }
         }, mBackgroundHandler);
+    }
+
+    private void mergeFrontAndBackCameraFrames() {
+        if (!rfc_bitmap_queue.isEmpty() && !ffc_bitmap_queue.isEmpty() && mRecording) {
+            Log.d("Sundeep ", "mergeFrontAndBackCameraFrames");
+            Bitmap ffcBitmap = ffc_bitmap_queue.poll();
+            Bitmap rfcBitmap = rfc_bitmap_queue.poll();
+            if (ffcBitmap != null & rfcBitmap != null) {
+                int width = ffcBitmap.getWidth() * 2;
+                int height = ffcBitmap.getHeight();
+
+                Bitmap cs = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                Canvas comboImage = new Canvas(cs);
+                comboImage.drawBitmap(ffcBitmap, 0, 0, null);
+                comboImage.drawBitmap(rfcBitmap, ffcBitmap.getWidth(), 0, null);
+
+                try {
+                    String filename = "Merged_FFC_RFC_" + new SimpleDateFormat("MMddHHmmss").format(new Date()) + ".jpg";
+                    File sd = mContext.getExternalFilesDir(null);
+                    File dest = new File(sd, filename);
+                    FileOutputStream out = new FileOutputStream(dest);
+                    cs.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                    out.flush();
+                    out.close();
+                    Log.d("Sundeep ", "mergeFrontAndBackCameraFrames File Saved ///////");
+                } catch (Exception e) {
+                    Log.d("Sundeep ", "mergeFrontAndBackCameraFrames File Saving Failed XXXXX ");
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     private Bitmap fromByteBuffer(ByteBuffer buffer) {
