@@ -1,9 +1,16 @@
 package com.example.android.camera2basic.videomode;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraCaptureSession;
+import android.media.Image;
+import android.media.ImageReader;
 import android.os.Handler;
 import android.util.Log;
 import android.util.Size;
+
+import androidx.annotation.Nullable;
 
 import com.example.android.camera2basic.interfaces.ICameraDeviceHolder;
 import com.example.android.camera2basic.interfaces.ICaptureSessionHolder;
@@ -17,6 +24,7 @@ import com.example.android.camera2basic.interfaces.ISaveHandler;
 import com.example.android.camera2basic.interfaces.IVideoMode;
 import com.example.android.camera2basic.interfaces.IVideoSaveHandler;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class VideoMode implements IVideoMode {
@@ -34,6 +42,8 @@ public class VideoMode implements IVideoMode {
     private boolean mRecording = false;
     private ICaptureSessionHolder mBackCaptureSessionHolder;
     private ICaptureSessionHolder mFrontCaptureSessionHolder;
+    private ImageReader mFrontPreviewFrame;
+    private ImageReader mBackPreviewFrame;
 
     public VideoMode(IPreviewHandler backPreviewHandler, IPreviewHandler frontPreviewHandler, IVideoSaveHandler backSaveHandler, IVideoSaveHandler frontSaveHandler, DisplayParams displayParams, ICameraDeviceHolder backCamera, ICameraDeviceHolder frontCamera) {
         mBackPreviewHandler = backPreviewHandler;
@@ -129,10 +139,55 @@ public class VideoMode implements IVideoMode {
         // For still image captures, we use the largest available size.
         Size largest = mBackCamera.getLargestSize(isPhotoMode());
         saveHandler.initialize(mBackgroundHandler, largest);
+        prepareFrontPreviewFrameReader(640, 480);
+
         // Find out if we need to swap dimension to get the preview size relative to sensor
         // coordinate.
         boolean swappedDimensions = mBackCamera.shouldSwapDimensions(mDisplayParams.getRotation());
         previewHandler.calculateBestPreviewSize(largest, swappedDimensions, mDisplayParams.getDisplaySize(), orientation, mBackCamera.getPreviewSizes());
+        prepareBackPreviewFrameReader(640, 480);
+    }
+
+    private void prepareFrontPreviewFrameReader(int width, int height) {
+        Log.d("Sundeep", "prepareFrontPreviewFrameReader");
+        mFrontPreviewFrame = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 1);
+        mFrontPreviewFrame.setOnImageAvailableListener(reader -> {
+            Log.d("Sundeep", "Front Frame");
+            Image image = null;
+            try {
+                image = reader.acquireLatestImage();
+                if (image != null) {
+                    ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+                    Bitmap bitmap = fromByteBuffer(buffer);
+                    image.close();
+                }
+            } catch (Exception e) {
+            }
+        }, mBackgroundHandler2);
+    }
+
+    private void prepareBackPreviewFrameReader(int width, int height) {
+        Log.d("Sundeep", "prepareBackPreviewFrameReader");
+        mBackPreviewFrame = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 1);
+        mBackPreviewFrame.setOnImageAvailableListener(reader -> {
+            Log.d("Sundeep", "Back Frame");
+            Image image = null;
+            try {
+                image = reader.acquireLatestImage();
+                if (image != null) {
+                    ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+                    Bitmap bitmap = fromByteBuffer(buffer);
+                    image.close();
+                }
+            } catch (Exception e) {
+            }
+        }, mBackgroundHandler);
+    }
+
+    private Bitmap fromByteBuffer(ByteBuffer buffer) {
+        byte[] bytes = new byte[buffer.capacity()];
+        buffer.get(bytes, 0, bytes.length);
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
     }
 
     @Override
@@ -175,9 +230,9 @@ public class VideoMode implements IVideoMode {
         public void onConfigured() {
             Log.d("Sundeep", "CaptureSession Configured isFront " + mIsFront);
             if (mIsFront) {
-                mFrontCaptureCallback.createPreviewRequest(mFrontPreviewHandler.getTarget(), mFrontSaveHandler.getTarget());
+                mFrontCaptureCallback.createPreviewRequest(mFrontPreviewHandler.getTarget(), mFrontPreviewFrame.getSurface());
             } else {
-                mBackCaptureCallback.createPreviewRequest(mBackPreviewHandler.getTarget(), mBackSaveHandler.getTarget());
+                mBackCaptureCallback.createPreviewRequest(mBackPreviewHandler.getTarget(), mBackPreviewFrame.getSurface());
 
             }
         }
