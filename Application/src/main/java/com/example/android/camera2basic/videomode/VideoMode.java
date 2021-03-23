@@ -19,6 +19,7 @@ import com.example.android.camera2basic.interfaces.ICaptureSessionHolder;
 import com.example.android.camera2basic.interfaces.ISessionStateCallback;
 import com.example.android.camera2basic.ui.DisplayParams;
 import com.example.android.camera2basic.camera2.CaptureSessionHolder;
+import com.example.android.camera2basic.util.BitmapToVideoEncoder;
 import com.example.android.camera2basic.util.ComboCaptureSessionStateCallback;
 import com.example.android.camera2basic.util.NoOpCaptureSessionStateCallback;
 import com.example.android.camera2basic.interfaces.IPreviewHandler;
@@ -47,7 +48,7 @@ public class VideoMode implements IVideoMode {
     private final ICameraDeviceHolder mFrontCamera;
     private VideoCaptureSessionCallback mBackCaptureCallback;
     private VideoCaptureSessionCallback mFrontCaptureCallback;
-    private boolean mRecording = true;
+    private boolean mRecording = false;
     private ICaptureSessionHolder mBackCaptureSessionHolder;
     private ICaptureSessionHolder mFrontCaptureSessionHolder;
     private ImageReader mFrontPreviewFrameReader;
@@ -55,6 +56,7 @@ public class VideoMode implements IVideoMode {
     ConcurrentLinkedQueue<Bitmap> ffc_bitmap_queue = new ConcurrentLinkedQueue<>();
     ConcurrentLinkedQueue<Bitmap> rfc_bitmap_queue = new ConcurrentLinkedQueue<>();
     private Context mContext;
+    private BitmapToVideoEncoder mBitmapToVideoEncoder = new BitmapToVideoEncoder(outputFile -> {});
 
     public VideoMode(Context context, IPreviewHandler backPreviewHandler, IPreviewHandler frontPreviewHandler, IVideoSaveHandler backSaveHandler, IVideoSaveHandler frontSaveHandler, DisplayParams displayParams, ICameraDeviceHolder backCamera, ICameraDeviceHolder frontCamera) {
         mContext = context;
@@ -179,6 +181,7 @@ public class VideoMode implements IVideoMode {
                     image.close();
                 }
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }, mBackgroundHandler2);
     }
@@ -200,12 +203,13 @@ public class VideoMode implements IVideoMode {
                     image.close();
                 }
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }, mBackgroundHandler);
     }
 
     private void mergeFrontAndBackCameraFrames() {
-        if (!rfc_bitmap_queue.isEmpty() && !ffc_bitmap_queue.isEmpty() && mRecording) {
+        if (!rfc_bitmap_queue.isEmpty() && !ffc_bitmap_queue.isEmpty()) {
             Log.d("Sundeep ", "mergeFrontAndBackCameraFrames");
             Bitmap ffcBitmap = ffc_bitmap_queue.poll();
             Bitmap rfcBitmap = rfc_bitmap_queue.poll();
@@ -217,6 +221,9 @@ public class VideoMode implements IVideoMode {
                 Canvas comboImage = new Canvas(cs);
                 comboImage.drawBitmap(ffcBitmap, 0, 0, null);
                 comboImage.drawBitmap(rfcBitmap, ffcBitmap.getWidth(), 0, null);
+
+                mBitmapToVideoEncoder.queueFrame(cs);
+
 
                 try {
                     String filename = "Merged_FFC_RFC_" + new SimpleDateFormat("MMddHHmmss").format(new Date()) + ".jpg";
@@ -244,14 +251,21 @@ public class VideoMode implements IVideoMode {
     @Override
     public void startRecording() {
         mRecording = true;
-        mBackSaveHandler.startRecording();
+        // mBackSaveHandler.startRecording();
+        String filename =
+                "Video_FFC_RFC_" + new SimpleDateFormat("MMddHHmmss").format(new Date()) + ".mp4";
+        File sd = mContext.getExternalFilesDir(null);
+        File dest = new File(sd, filename);
+        mBitmapToVideoEncoder.startEncoding(
+                mFrontPreviewHandler.getWidth() * 2, mFrontPreviewHandler.getHeight(), dest);
     }
 
     @Override
     public void stopRecording() {
         if (mRecording) {
             mRecording = false;
-            mBackSaveHandler.stopRecording();
+            //mBackSaveHandler.stopRecording();
+            mBitmapToVideoEncoder.stopEncoding();
         }
     }
 
