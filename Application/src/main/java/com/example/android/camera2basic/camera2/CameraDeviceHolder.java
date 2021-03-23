@@ -263,7 +263,7 @@ public class CameraDeviceHolder extends CameraDevice.StateCallback implements IC
             if (imageReader != null) {
                 mCameraDevice.createCaptureSession(Arrays.asList(mPreviewSurface.getTarget(), imageReader.getSurface(), mSaveSurface.getTarget()), captureSessionHolder, mHandler);
             } else {
-                mCameraDevice.createCaptureSession(Arrays.asList(mPreviewSurface.getTarget(), mSaveSurface.getTarget()), captureSessionHolder, mHandler);
+                mCameraDevice.createCaptureSession(Arrays.asList(mPreviewSurface.getTarget()), captureSessionHolder, mHandler);
             }
 
         } catch (CameraAccessException e) {

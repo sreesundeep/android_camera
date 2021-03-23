@@ -56,7 +56,8 @@ public class VideoMode implements IVideoMode {
     ConcurrentLinkedQueue<Bitmap> ffc_bitmap_queue = new ConcurrentLinkedQueue<>();
     ConcurrentLinkedQueue<Bitmap> rfc_bitmap_queue = new ConcurrentLinkedQueue<>();
     private Context mContext;
-    private BitmapToVideoEncoder mBitmapToVideoEncoder = new BitmapToVideoEncoder(outputFile -> {});
+    private BitmapToVideoEncoder mBitmapToVideoEncoder = new BitmapToVideoEncoder(outputFile -> {
+    });
 
     public VideoMode(Context context, IPreviewHandler backPreviewHandler, IPreviewHandler frontPreviewHandler, IVideoSaveHandler backSaveHandler, IVideoSaveHandler frontSaveHandler, DisplayParams displayParams, ICameraDeviceHolder backCamera, ICameraDeviceHolder frontCamera) {
         mContext = context;
@@ -224,7 +225,11 @@ public class VideoMode implements IVideoMode {
 
                 mBitmapToVideoEncoder.queueFrame(cs);
 
-
+                /**
+                 * Saving merged frame to disk.
+                 * Comment it for now, as we don't need it now.
+                 */
+                /*
                 try {
                     String filename = "Merged_FFC_RFC_" + new SimpleDateFormat("MMddHHmmss").format(new Date()) + ".jpg";
                     File sd = mContext.getExternalFilesDir(null);
@@ -237,7 +242,7 @@ public class VideoMode implements IVideoMode {
                 } catch (Exception e) {
                     Log.d("Sundeep ", "mergeFrontAndBackCameraFrames File Saving Failed XXXXX ");
                     e.printStackTrace();
-                }
+                }*/
             }
         }
     }
