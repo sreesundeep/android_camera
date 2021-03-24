@@ -52,6 +52,8 @@ public class Camera2BasicFragment extends Fragment
     public static final String[] VIDEO_PERMISSIONS = {
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE
     };
     static final int REQUEST_VIDEO_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";

@@ -14,6 +14,11 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
 
+import com.example.android.camera2basic.encoders.BitmapToVideoMediaEncoder;
+import com.example.android.camera2basic.encoders.MediaAudioEncoder;
+import com.example.android.camera2basic.encoders.MediaEncoder;
+import com.example.android.camera2basic.encoders.MediaMuxerWrapper;
+import com.example.android.camera2basic.encoders.MediaVideoEncoder;
 import com.example.android.camera2basic.interfaces.ICameraDeviceHolder;
 import com.example.android.camera2basic.interfaces.ICaptureSessionHolder;
 import com.example.android.camera2basic.interfaces.ISessionStateCallback;
@@ -29,6 +34,7 @@ import com.example.android.camera2basic.interfaces.IVideoSaveHandler;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
@@ -37,6 +43,8 @@ import java.util.Date;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class VideoMode implements IVideoMode {
+    private static final boolean DEBUG = true;
+    private static final String TAG = "VideoMode";
     private final IPreviewHandler mBackPreviewHandler;
     private final IPreviewHandler mFrontPreviewHandler;
     private final IVideoSaveHandler mBackSaveHandler;
@@ -56,8 +64,8 @@ public class VideoMode implements IVideoMode {
     ConcurrentLinkedQueue<Bitmap> ffc_bitmap_queue = new ConcurrentLinkedQueue<>();
     ConcurrentLinkedQueue<Bitmap> rfc_bitmap_queue = new ConcurrentLinkedQueue<>();
     private Context mContext;
-    private BitmapToVideoEncoder mBitmapToVideoEncoder = new BitmapToVideoEncoder(outputFile -> {
-    });
+    private BitmapToVideoMediaEncoder mBitmapToVideoMediaEncoder;
+    private MediaMuxerWrapper mMuxer;
 
     public VideoMode(Context context, IPreviewHandler backPreviewHandler, IPreviewHandler frontPreviewHandler, IVideoSaveHandler backSaveHandler, IVideoSaveHandler frontSaveHandler, DisplayParams displayParams, ICameraDeviceHolder backCamera, ICameraDeviceHolder frontCamera) {
         mContext = context;
@@ -223,7 +231,7 @@ public class VideoMode implements IVideoMode {
                 comboImage.drawBitmap(ffcBitmap, 0, 0, null);
                 comboImage.drawBitmap(rfcBitmap, ffcBitmap.getWidth(), 0, null);
 
-                mBitmapToVideoEncoder.queueFrame(cs);
+                mBitmapToVideoMediaEncoder.queueFrame(cs);
 
                 /**
                  * Saving merged frame to disk.
@@ -253,6 +261,7 @@ public class VideoMode implements IVideoMode {
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
     }
 
+/*
     @Override
     public void startRecording() {
         mRecording = true;
@@ -273,6 +282,75 @@ public class VideoMode implements IVideoMode {
             mBitmapToVideoEncoder.stopEncoding();
         }
     }
+*/
+
+
+    /**
+     * start resorcing
+     * This is a sample project and call this on UI thread to avoid being complicated
+     * but basically this should be called on private thread because prepareing
+     * of encoder is heavy work
+     */
+
+    @Override
+    public void startRecording() {
+        if (DEBUG) Log.v(TAG, "startRecording:");
+        mRecording = true;
+
+        String filename =
+                "Video_FFC_RFC_" + new SimpleDateFormat("MMddHHmmss").format(new Date()) + ".mp4";
+        File sd = mContext.getExternalFilesDir(null);
+        File dest = new File(sd, filename);
+        try {
+            mMuxer = new MediaMuxerWrapper(".mp4", dest.getAbsolutePath());	// if you record audio only, ".m4a" is also OK.
+            if (true) {
+                // for video capturing
+                mBitmapToVideoMediaEncoder =  new BitmapToVideoMediaEncoder(mMuxer, mMediaEncoderListener, mFrontPreviewHandler.getWidth() * 2, mFrontPreviewHandler.getHeight());
+            }
+            if (true) {
+                // for audio capturing
+                new MediaAudioEncoder(mMuxer, mMediaEncoderListener);
+            }
+            mMuxer.prepare();
+            mMuxer.startRecording();
+        } catch (final IOException e) {
+            Log.e(TAG, "startCapture:", e);
+        }
+    }
+
+    /**
+     * request stop recording
+     */
+    @Override
+    public void stopRecording() {
+        if (DEBUG) Log.v(TAG, "stopRecording:mMuxer=" + mMuxer);
+        if (mMuxer != null) {
+            mMuxer.stopRecording();
+            mMuxer = null;
+            mRecording = false;
+            // you should not wait here
+        }
+    }
+
+    /**
+     * callback methods from encoder
+     */
+    private final MediaEncoder.MediaEncoderListener mMediaEncoderListener = new MediaEncoder.MediaEncoderListener() {
+        @Override
+        public void onPrepared(final MediaEncoder encoder) {
+            if (DEBUG) Log.v(TAG, "onPrepared:encoder=" + encoder);
+            //if (encoder instanceof com.serenegiant.encoder.MediaVideoEncoder)
+                //mCameraView.setVideoEncoder((com.serenegiant.encoder.MediaVideoEncoder)encoder);
+        }
+
+        @Override
+        public void onStopped(final MediaEncoder encoder) {
+            if (DEBUG) Log.v(TAG, "onStopped:encoder=" + encoder);
+          //  if (encoder instanceof com.serenegiant.encoder.MediaVideoEncoder)
+              //  mCameraView.setVideoEncoder(null);
+        }
+    };
+
 
     @Override
     public boolean isPhotoMode() {
