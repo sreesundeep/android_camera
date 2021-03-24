@@ -38,9 +38,11 @@ public abstract class BasePreviewHandler implements IPreviewHandler {
         // Danger, W.R.! Attempting to use too large a preview size could  exceed the camera
         // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
         // garbage capture data.
-        mPreviewSize = chooseOptimalSize(outputSizes,
+        /*mPreviewSize = chooseOptimalSize(outputSizes,
                 rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
-                maxPreviewHeight, largest);
+                maxPreviewHeight, largest);*/
+
+        mPreviewSize = new Size(640, 480);
         // We fit the aspect ratio of TextureView to the size of preview we picked.
         /*if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
             setAspectRatio(mPreviewSize.getWidth(), mPreviewSize.getHeight());
