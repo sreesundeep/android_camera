@@ -75,6 +75,7 @@ public class CameraInteractor implements DefaultLifecycleObserver {
         mFile2 = new File(mContext.getExternalFilesDir(null), fileName2);
         //cameraModes.add(new PictureMode(backCameraPreviewHandler, frontCameraPreviewHandler, new ImageSaveHandler(mFile), mDisplayParams, backCamera, frontCamera));
         cameraModes.add(new VideoMode(mContext, backCameraPreviewHandler, frontCameraPreviewHandler, new MediaRecorderSaveHandler(mFile1), new MediaRecorderSaveHandler(mFile2), mDisplayParams, mBackCamera, mFrontCamera));
+        cameraModes.add(new PictureMode(mContext, backCameraPreviewHandler, frontCameraPreviewHandler, new MediaRecorderSaveHandler(mFile1), new MediaRecorderSaveHandler(mFile2), mDisplayParams, mBackCamera, mFrontCamera));
         currentMode = cameraModes.get(controlPanel.getDefaultMode());
     }
 
@@ -147,7 +148,7 @@ public class CameraInteractor implements DefaultLifecycleObserver {
 
     public void capture() {
         if (currentMode.isPhotoMode()) {
-            ((IPhotoMode) currentMode).takePicture();
+            ((IVideoMode) currentMode).takePicture();
         } else {
             IVideoMode currentMode = (IVideoMode) this.currentMode;
             if (currentMode.isRecording()) {
@@ -165,19 +166,23 @@ public class CameraInteractor implements DefaultLifecycleObserver {
     }
 
     public void setMode(int position) {
-        /*currentMode.close();
+        //currentMode.close();
         currentMode = cameraModes.get(position);
         if (currentMode.isPhotoMode()) {
             controlPanel.setButtonLabel("Capture");
         } else {
             controlPanel.setButtonLabel("Record");
         }
-        currentMode.onTextureAvailable();
+        currentMode.onTextureAvailable(false);
+        currentMode.initialize(
+                new CaptureSessionStateCallback(),
+                new CaptureCallback(),
+                mBackCamera);
 
         currentMode.initialize(
                 new CaptureSessionStateCallback(),
                 new CaptureCallback(),
-                mBackCamera);*/
+                mFrontCamera);
     }
 
     public List<String> getCameraModes() {
