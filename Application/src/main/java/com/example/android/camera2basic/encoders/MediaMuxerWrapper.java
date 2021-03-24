@@ -105,7 +105,7 @@ public class MediaMuxerWrapper {
 	 * @param encoder instance of MediaVideoEncoder or MediaAudioEncoder
 	 */
 	/*package*/ void addEncoder(final MediaEncoder encoder) {
-		if (encoder instanceof MediaVideoEncoder || encoder instanceof BitmapToVideoMediaEncoder) {
+		if (encoder instanceof BitmapToVideoMediaEncoder) {
 			if (mVideoEncoder != null)
 				throw new IllegalArgumentException("Video encoder already added.");
 			mVideoEncoder = encoder;

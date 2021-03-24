@@ -20,7 +20,6 @@ import com.example.android.camera2basic.encoders.BitmapToVideoMediaEncoder;
 import com.example.android.camera2basic.encoders.MediaAudioEncoder;
 import com.example.android.camera2basic.encoders.MediaEncoder;
 import com.example.android.camera2basic.encoders.MediaMuxerWrapper;
-import com.example.android.camera2basic.encoders.MediaVideoEncoder;
 import com.example.android.camera2basic.interfaces.ICameraDeviceHolder;
 import com.example.android.camera2basic.interfaces.ICaptureSessionHolder;
 import com.example.android.camera2basic.interfaces.ISessionStateCallback;
