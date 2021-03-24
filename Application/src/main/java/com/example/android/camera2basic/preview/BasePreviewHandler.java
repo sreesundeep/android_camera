@@ -21,8 +21,8 @@ public abstract class BasePreviewHandler implements IPreviewHandler {
     static final int MAX_PREVIEW_HEIGHT = 1080;
     protected Size mPreviewSize;
     protected ISurfaceAvailableCallback mSurfaceAvailableCallback;
-    int mHeight = MAX_PREVIEW_HEIGHT;
-    int mWidth = MAX_PREVIEW_WIDTH;
+    int mHeight = 1080;
+    int mWidth = 1920;
 
     public void calculateBestPreviewSize(Size largest, boolean swappedDimensions, Point displaySize, int orientation, Size[] outputSizes) {
         int rotatedPreviewWidth = swappedDimensions ? getViewHeight() : getViewWidth();
@@ -40,10 +40,7 @@ public abstract class BasePreviewHandler implements IPreviewHandler {
         // garbage capture data.
         /*mPreviewSize = chooseOptimalSize(outputSizes,
                 rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
-                maxPreviewHeight, largest);
-
-        Log.d(TAG, "Sundeep swappedDimensions "+swappedDimensions);
-        Log.d(TAG, "Sundeep final choose preview size "+mPreviewSize);*/
+                maxPreviewHeight, largest);*/
 
         mPreviewSize = new Size(640, 480);
         // We fit the aspect ratio of TextureView to the size of preview we picked.
@@ -102,8 +99,6 @@ public abstract class BasePreviewHandler implements IPreviewHandler {
         int w = aspectRatio.getWidth();
         int h = aspectRatio.getHeight();
         for (Size option : choices) {
-            Log.d(TAG, "Sundeep preview size "+option);
-            Log.d(TAG, "Sundeep texture size "+new Size(textureViewWidth, textureViewHeight));
             if (option.getWidth() <= maxWidth && option.getHeight() <= maxHeight &&
                     option.getHeight() == option.getWidth() * h / w) {
                 if (option.getWidth() >= textureViewWidth &&
