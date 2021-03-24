@@ -14,7 +14,7 @@ import com.example.android.camera2basic.interfaces.ICameraDeviceHolder;
 import com.example.android.camera2basic.interfaces.ICaptureSessionHolder;
 import com.example.android.camera2basic.interfaces.ISaveHandler;
 
-class VideoCaptureSessionCallback extends CameraCaptureSession.CaptureCallback {
+public class VideoCaptureSessionCallback extends CameraCaptureSession.CaptureCallback {
     private final ICameraDeviceHolder mCameraDeviceHolder;
     private final ICaptureSessionHolder mCaptureSessionHolder;
     private final int mRotation;

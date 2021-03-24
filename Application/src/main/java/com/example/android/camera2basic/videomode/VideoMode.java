@@ -381,6 +381,11 @@ public class VideoMode implements IVideoMode {
         return mRecording;
     }
 
+    @Override
+    public void takePicture() {
+
+    }
+
     private class PreviewStartTask extends NoOpCaptureSessionStateCallback {
         private boolean mIsFront;
 
