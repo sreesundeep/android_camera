@@ -52,6 +52,8 @@ public class Camera2BasicFragment extends Fragment
     public static final String[] VIDEO_PERMISSIONS = {
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE
     };
     static final int REQUEST_VIDEO_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
@@ -134,10 +136,10 @@ public class Camera2BasicFragment extends Fragment
         try {
             File file = new File(imagePath);
             if (file.exists()) {
-                Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(file, new Size(64, 64), null);
-                mPreview.setImageBitmap(bitmap);
+                //Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(file, new Size(64, 64), null);
+                //mPreview.setImageBitmap(bitmap);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

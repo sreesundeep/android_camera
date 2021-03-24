@@ -3,6 +3,7 @@ package com.example.android.camera2basic.camera2;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CaptureRequest;
+import android.media.ImageReader;
 import android.os.Handler;
 
 import androidx.annotation.NonNull;
@@ -20,18 +21,20 @@ public class CaptureSessionHolder extends CameraCaptureSession.StateCallback imp
     private final Handler mHandler;
     protected CameraCaptureSession mCameraCaptureSession;
     private ISessionStateCallback mCallerStateCallback;
+    private ImageReader mImageReader;
 
-    public CaptureSessionHolder(ICameraDeviceHolder cameraDevice, IPreviewHandler previewSurface, ISaveHandler saveSurface, Handler handler) {
+    public CaptureSessionHolder(ICameraDeviceHolder cameraDevice, IPreviewHandler previewSurface, ISaveHandler saveSurface, Handler handler, ImageReader imageReader) {
         this.mCameraDevice = cameraDevice;
         this.mPreviewSurface = previewSurface;
         this.mSaveSurface = saveSurface;
         this.mHandler = handler;
+        this.mImageReader = imageReader;
     }
 
     @Override
     public void createSession(ISessionStateCallback callerStateCallback) {
         mCallerStateCallback = callerStateCallback;
-        mCameraDevice.createCaptureSession(mPreviewSurface, mSaveSurface, this, mHandler);
+        mCameraDevice.createCaptureSession(mPreviewSurface, mSaveSurface, mImageReader, this, mHandler);
     }
 
     @Override
