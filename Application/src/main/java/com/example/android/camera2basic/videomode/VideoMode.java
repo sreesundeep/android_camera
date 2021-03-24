@@ -119,19 +119,19 @@ public class VideoMode implements IVideoMode {
 
     @Override
     public void close() {
-        if (mBackCaptureCallback != null) {
+        try {
             mBackCaptureCallback.close();
-        }
-        mBackCaptureSessionHolder.close();
-        mBackPreviewHandler.close();
-        mBackSaveHandler.close();
+            mBackCaptureSessionHolder.close();
+            mBackPreviewHandler.close();
+            mBackSaveHandler.close();
 
-        if (mFrontCaptureCallback != null) {
             mFrontCaptureCallback.close();
+            mFrontCaptureSessionHolder.close();
+            mFrontPreviewHandler.close();
+            mFrontSaveHandler.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        mFrontCaptureSessionHolder.close();
-        mFrontPreviewHandler.close();
-        mFrontSaveHandler.close();
     }
 
     @Override
