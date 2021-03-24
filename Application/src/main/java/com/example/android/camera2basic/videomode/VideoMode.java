@@ -319,7 +319,7 @@ public class VideoMode implements IVideoMode {
             mMuxer = new MediaMuxerWrapper(".mp4", dest.getAbsolutePath());	// if you record audio only, ".m4a" is also OK.
             if (true) {
                 // for video capturing
-                mBitmapToVideoMediaEncoder =  new BitmapToVideoMediaEncoder(mMuxer, mMediaEncoderListener, mFrontPreviewHandler.getWidth() * 2, mFrontPreviewHandler.getHeight());
+                mBitmapToVideoMediaEncoder =  new BitmapToVideoMediaEncoder(mMuxer, mMediaEncoderListener, finalVideoWidth, finalVideoHeight);
             }
             if (true) {
                 // for audio capturing
