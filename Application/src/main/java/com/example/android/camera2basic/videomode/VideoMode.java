@@ -5,9 +5,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.hardware.camera2.CameraCaptureSession;
 import android.media.Image;
 import android.media.ImageReader;
+import android.nfc.cardemulation.OffHostApduService;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
@@ -66,6 +68,9 @@ public class VideoMode implements IVideoMode {
     private Context mContext;
     private BitmapToVideoMediaEncoder mBitmapToVideoMediaEncoder;
     private MediaMuxerWrapper mMuxer;
+
+    int finalVideoWidth = 960;
+    int finalVideoHeight = 640;
 
     public VideoMode(Context context, IPreviewHandler backPreviewHandler, IPreviewHandler frontPreviewHandler, IVideoSaveHandler backSaveHandler, IVideoSaveHandler frontSaveHandler, DisplayParams displayParams, ICameraDeviceHolder backCamera, ICameraDeviceHolder frontCamera) {
         mContext = context;
@@ -127,19 +132,19 @@ public class VideoMode implements IVideoMode {
 
     @Override
     public void close() {
-        if (mBackCaptureCallback != null) {
+        try {
             mBackCaptureCallback.close();
-        }
-        mBackCaptureSessionHolder.close();
-        mBackPreviewHandler.close();
-        mBackSaveHandler.close();
+            mBackCaptureSessionHolder.close();
+            mBackPreviewHandler.close();
+            mBackSaveHandler.close();
 
-        if (mFrontCaptureCallback != null) {
             mFrontCaptureCallback.close();
+            mFrontCaptureSessionHolder.close();
+            mFrontPreviewHandler.close();
+            mFrontSaveHandler.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        mFrontCaptureSessionHolder.close();
-        mFrontPreviewHandler.close();
-        mFrontSaveHandler.close();
     }
 
     @Override
@@ -168,6 +173,7 @@ public class VideoMode implements IVideoMode {
         // Find out if we need to swap dimension to get the preview size relative to sensor
         // coordinate.
         boolean swappedDimensions = mBackCamera.shouldSwapDimensions(mDisplayParams.getRotation());
+        swappedDimensions = false;
         previewHandler.calculateBestPreviewSize(largest, swappedDimensions, mDisplayParams.getDisplaySize(), orientation, mBackCamera.getPreviewSizes());
     }
 
@@ -221,7 +227,10 @@ public class VideoMode implements IVideoMode {
         if (!rfc_bitmap_queue.isEmpty() && !ffc_bitmap_queue.isEmpty()) {
             Log.d("Sundeep ", "mergeFrontAndBackCameraFrames");
             Bitmap ffcBitmap = ffc_bitmap_queue.poll();
+            ffcBitmap = getRotatedBitmap(ffcBitmap, ffcBitmap.getWidth(), ffcBitmap.getHeight(), 270);
             Bitmap rfcBitmap = rfc_bitmap_queue.poll();
+            rfcBitmap = getRotatedBitmap(rfcBitmap, rfcBitmap.getWidth(), rfcBitmap.getHeight(), 90);
+
             if (ffcBitmap != null & rfcBitmap != null) {
                 int width = ffcBitmap.getWidth() * 2;
                 int height = ffcBitmap.getHeight();
@@ -237,13 +246,13 @@ public class VideoMode implements IVideoMode {
                  * Saving merged frame to disk.
                  * Comment it for now, as we don't need it now.
                  */
-                /*
-                try {
+
+                /*try {
                     String filename = "Merged_FFC_RFC_" + new SimpleDateFormat("MMddHHmmss").format(new Date()) + ".jpg";
                     File sd = mContext.getExternalFilesDir(null);
                     File dest = new File(sd, filename);
                     FileOutputStream out = new FileOutputStream(dest);
-                    cs.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                    ffcBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
                     out.flush();
                     out.close();
                     Log.d("Sundeep ", "mergeFrontAndBackCameraFrames File Saved ///////");
@@ -253,6 +262,13 @@ public class VideoMode implements IVideoMode {
                 }*/
             }
         }
+    }
+
+    private Bitmap getRotatedBitmap(Bitmap bitmap, int width, int height, int rotation) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(rotation);
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
+        return Bitmap.createBitmap(scaledBitmap, 0, 0, scaledBitmap.getWidth(), scaledBitmap.getHeight(), matrix, true);
     }
 
     private Bitmap fromByteBuffer(ByteBuffer buffer) {
@@ -267,11 +283,10 @@ public class VideoMode implements IVideoMode {
         mRecording = true;
         // mBackSaveHandler.startRecording();
         String filename =
-                "Video_FFC_RFC_" + new SimpleDateFormat("MMddHHmmss").format(new Date()) + ".mp4";
+            "Video_FFC_RFC_" + new SimpleDateFormat("MMddHHmmss").format(new Date()) + ".mp4";
         File sd = mContext.getExternalFilesDir(null);
         File dest = new File(sd, filename);
-        mBitmapToVideoEncoder.startEncoding(
-                mFrontPreviewHandler.getWidth() * 2, mFrontPreviewHandler.getHeight(), dest);
+        mBitmapToVideoEncoder.startEncoding(finalVideoWidth, finalVideoHeight, dest);
     }
 
     @Override
