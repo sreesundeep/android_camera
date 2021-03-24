@@ -47,7 +47,7 @@ public class VideoMode implements IVideoMode {
     private final ICameraDeviceHolder mFrontCamera;
     private VideoCaptureSessionCallback mBackCaptureCallback;
     private VideoCaptureSessionCallback mFrontCaptureCallback;
-    private boolean mRecording = true;
+    private boolean mRecording = false;
     private ICaptureSessionHolder mBackCaptureSessionHolder;
     private ICaptureSessionHolder mFrontCaptureSessionHolder;
     private ImageReader mFrontPreviewFrameReader;
@@ -65,6 +65,7 @@ public class VideoMode implements IVideoMode {
         mDisplayParams = displayParams;
         mBackCamera = backCamera;
         mFrontCamera = frontCamera;
+
     }
 
     @Override
