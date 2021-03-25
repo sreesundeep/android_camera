@@ -22,6 +22,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.media.ThumbnailUtils;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Size;
 import android.view.LayoutInflater;
@@ -69,6 +70,10 @@ public class Camera2BasicFragment extends Fragment
     private CustomGLSurfaceView mGLSurfaceView;
     private TextView mTimer;
 
+
+    public static final boolean mIsZetaHardware =
+        Build.HARDWARE != null & Build.HARDWARE.equals("oemc1");
+
     public static Camera2BasicFragment newInstance() {
         return new Camera2BasicFragment();
     }
@@ -80,7 +85,9 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_camera2_basic, container, false);
+        return inflater.inflate(mIsZetaHardware
+            ? R.layout.fragment_camera2_basic_dual
+            : R.layout.fragment_camera2_basic, container, false);
     }
 
     @Override

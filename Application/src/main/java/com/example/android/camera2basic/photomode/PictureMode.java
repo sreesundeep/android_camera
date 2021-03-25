@@ -275,7 +275,7 @@ public class PictureMode implements IVideoMode {
 
     @Override
     public String getName() {
-        return "PHOTO";
+        return "Photo";
     }
 
     @Override

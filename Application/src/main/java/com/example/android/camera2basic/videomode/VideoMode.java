@@ -23,6 +23,7 @@ import com.example.android.camera2basic.encoders.MediaMuxerWrapper;
 import com.example.android.camera2basic.interfaces.ICameraDeviceHolder;
 import com.example.android.camera2basic.interfaces.ICaptureSessionHolder;
 import com.example.android.camera2basic.interfaces.ISessionStateCallback;
+import com.example.android.camera2basic.ui.Camera2BasicFragment;
 import com.example.android.camera2basic.ui.DisplayParams;
 import com.example.android.camera2basic.camera2.CaptureSessionHolder;
 import com.example.android.camera2basic.util.BitmapToVideoEncoder;
@@ -226,7 +227,7 @@ public class VideoMode implements IVideoMode {
         if (!rfc_bitmap_queue.isEmpty() && !ffc_bitmap_queue.isEmpty()) {
             Log.d("Sundeep ", "mergeFrontAndBackCameraFrames");
             Bitmap ffcBitmap = ffc_bitmap_queue.poll();
-            ffcBitmap = getRotatedBitmap(ffcBitmap, ffcBitmap.getWidth(), ffcBitmap.getHeight(), 90);
+            ffcBitmap = getRotatedBitmap(ffcBitmap, ffcBitmap.getWidth(), ffcBitmap.getHeight(), Camera2BasicFragment.mIsZetaHardware ? 90 : 270);
             Bitmap rfcBitmap = rfc_bitmap_queue.poll();
             rfcBitmap = getRotatedBitmap(rfcBitmap, rfcBitmap.getWidth(), rfcBitmap.getHeight(), 90);
 
