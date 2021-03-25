@@ -226,7 +226,7 @@ public class VideoMode implements IVideoMode {
         if (!rfc_bitmap_queue.isEmpty() && !ffc_bitmap_queue.isEmpty()) {
             Log.d("Sundeep ", "mergeFrontAndBackCameraFrames");
             Bitmap ffcBitmap = ffc_bitmap_queue.poll();
-            ffcBitmap = getRotatedBitmap(ffcBitmap, ffcBitmap.getWidth(), ffcBitmap.getHeight(), 270);
+            ffcBitmap = getRotatedBitmap(ffcBitmap, ffcBitmap.getWidth(), ffcBitmap.getHeight(), 90);
             Bitmap rfcBitmap = rfc_bitmap_queue.poll();
             rfcBitmap = getRotatedBitmap(rfcBitmap, rfcBitmap.getWidth(), rfcBitmap.getHeight(), 90);
 
