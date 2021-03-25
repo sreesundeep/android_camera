@@ -70,6 +70,7 @@ public class VideoMode implements IVideoMode {
 
     int finalVideoWidth = 960;
     int finalVideoHeight = 640;
+    private String mVideoFilePath;
 
     public VideoMode(Context context, IPreviewHandler backPreviewHandler, IPreviewHandler frontPreviewHandler, IVideoSaveHandler backSaveHandler, IVideoSaveHandler frontSaveHandler, DisplayParams displayParams, ICameraDeviceHolder backCamera, ICameraDeviceHolder frontCamera) {
         mContext = context;
@@ -311,10 +312,8 @@ public class VideoMode implements IVideoMode {
         if (DEBUG) Log.v(TAG, "startRecording:");
         mRecording = true;
 
-        String filename =
-                "Video_FFC_RFC_" + new SimpleDateFormat("MMddHHmmss").format(new Date()) + ".mp4";
         File sd = mContext.getExternalFilesDir(null);
-        File dest = new File(sd, filename);
+        File dest = new File(sd, mVideoFilePath);
         try {
             mMuxer = new MediaMuxerWrapper(".mp4", dest.getAbsolutePath());	// if you record audio only, ".m4a" is also OK.
             if (true) {
@@ -403,5 +402,10 @@ public class VideoMode implements IVideoMode {
 
             }
         }
+    }
+
+    @Override
+    public void setFilePath(String filePath){
+        mVideoFilePath = filePath;
     }
 }

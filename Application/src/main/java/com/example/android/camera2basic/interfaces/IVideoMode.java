@@ -8,4 +8,6 @@ public interface IVideoMode extends ICameraMode {
     boolean isRecording();
 
     void takePicture();
+
+    void setFilePath(String filePath);
 }

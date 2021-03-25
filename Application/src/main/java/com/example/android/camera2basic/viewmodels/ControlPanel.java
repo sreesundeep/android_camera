@@ -2,7 +2,13 @@ package com.example.android.camera2basic.viewmodels;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
+import android.util.Log;
+import android.util.Size;
+import android.view.View;
+import android.widget.ImageButton;
 
 import androidx.core.content.FileProvider;
 import androidx.lifecycle.LifecycleOwner;
@@ -20,6 +26,8 @@ public class ControlPanel implements ModeSwitchScrollView.SelectListener {
     final MutableLiveData<Boolean> mCameraNotAvailable = new MutableLiveData<Boolean>();
     final MutableLiveData<String> mButtonLabel = new MutableLiveData<String>();
     private final CameraInteractor mCameraInteractor;
+    private ImageButton mThumbNailView;
+    private String mFileName;
 
     public ControlPanel(CameraInteractor cameraInteractor) {
         mCameraInteractor = cameraInteractor;
@@ -31,6 +39,7 @@ public class ControlPanel implements ModeSwitchScrollView.SelectListener {
 
     public void setFilePath(String filePath) {
         mSavedFilePath.postValue(filePath);
+        mFileName = filePath;
     }
 
     public void observeSavedFilePath(LifecycleOwner viewLifecycleOwner, Observer<? super String> showToast) {
@@ -58,7 +67,7 @@ public class ControlPanel implements ModeSwitchScrollView.SelectListener {
     }
 
     public void showPreview(Context context) {
-        File file = new File(mSavedFilePath.getValue());
+        File file = new File(mFileName);
         Uri path = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".provider", file);
         Intent intent = new Intent(Intent.ACTION_VIEW, path);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -72,5 +81,31 @@ public class ControlPanel implements ModeSwitchScrollView.SelectListener {
     @Override
     public void onSelect(int beforePosition, int position) {
         mCameraInteractor.setMode(position);
+    }
+
+    public void setThumbNailView(ImageButton thumbNailView) {
+        this.mThumbNailView = thumbNailView;
+    }
+
+    public void updateThumbNail(boolean isPhotoMode) {
+        try {
+            File file = new File(mFileName);
+            Bitmap bitmap = null;
+            if (file.exists()) {
+                if (isPhotoMode) {
+                    bitmap = ThumbnailUtils.createImageThumbnail(file, new Size(64, 64), null);
+                } else {
+                    Log.d("vishal", "file does  exist");
+                    bitmap = ThumbnailUtils.createVideoThumbnail(file, new Size(64, 64), null);
+                    Log.d("vishal", Integer.toString(bitmap.getByteCount()));
+                }
+                mThumbNailView.setImageBitmap(bitmap);
+            } else {
+                Log.d("vishal", "file does not exist");
+            }
+        } catch (Exception e) {
+            Log.d("vishal", "error creating thumbnail");
+            e.printStackTrace();
+        }
     }
 }

@@ -56,6 +56,7 @@ public class PictureMode implements IVideoMode {
     private ICaptureSessionHolder mFrontCaptureSessionHolder;
     private ImageReader mFrontPreviewFrameReader;
     private ImageReader mBackPreviewFrameReader;
+    private String mPictureFilePath;
 
     ConcurrentLinkedQueue<Bitmap> ffc_bitmap_queue = new ConcurrentLinkedQueue<>();
     ConcurrentLinkedQueue<Bitmap> rfc_bitmap_queue = new ConcurrentLinkedQueue<>();
@@ -249,9 +250,8 @@ public class PictureMode implements IVideoMode {
             comboImage.drawBitmap(ffcBitmap, 0, 0, null);
             comboImage.drawBitmap(rfcBitmap, ffcBitmap.getWidth(), 0, null);
         }
-        String filename = "Merged_FFC_RFC_" + new SimpleDateFormat("MMddHHmmss").format(new Date()) + ".jpeg";
         File sd = mContext.getExternalFilesDir(null);
-        File dest = new File(sd, filename);
+        File dest = new File(sd, mPictureFilePath);
         FileOutputStream out = null;
         try {
             out = new FileOutputStream(dest);
@@ -300,5 +300,9 @@ public class PictureMode implements IVideoMode {
 
             }
         }
+    }
+    @Override
+    public void setFilePath(String filePath){
+        mPictureFilePath = filePath;
     }
 }

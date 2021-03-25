@@ -18,13 +18,11 @@ import com.example.android.camera2basic.util.NoOpCaptureSessionStateCallback;
 import com.example.android.camera2basic.util.NoOpStateCallback;
 import com.example.android.camera2basic.interfaces.ICameraDeviceHolder;
 import com.example.android.camera2basic.interfaces.ICameraMode;
-import com.example.android.camera2basic.interfaces.IPhotoMode;
 import com.example.android.camera2basic.interfaces.IPreviewHandler;
 import com.example.android.camera2basic.interfaces.IVideoMode;
 import com.example.android.camera2basic.opengl.CustomGLSurfaceView;
 import com.example.android.camera2basic.photomode.PictureMode;
 import com.example.android.camera2basic.preview.PreviewHandler;
-import com.example.android.camera2basic.savehandlers.ImageSaveHandler;
 import com.example.android.camera2basic.ui.AutoFitTextureView;
 import com.example.android.camera2basic.ui.DisplayParams;
 import com.example.android.camera2basic.videomode.VideoMode;
@@ -53,6 +51,9 @@ public class CameraInteractor implements DefaultLifecycleObserver {
     private File mFile2;
     private IPreviewHandler backCameraPreviewHandler;
     private IPreviewHandler frontCameraPreviewHandler;
+    private String mPictureFilePath;
+    private String mVideoFilePath;
+    private File f;
 
     public CameraInteractor(
             Context context,
@@ -77,6 +78,7 @@ public class CameraInteractor implements DefaultLifecycleObserver {
         cameraModes.add(new VideoMode(mContext, backCameraPreviewHandler, frontCameraPreviewHandler, new MediaRecorderSaveHandler(mFile1), new MediaRecorderSaveHandler(mFile2), mDisplayParams, mBackCamera, mFrontCamera));
         cameraModes.add(new PictureMode(mContext, backCameraPreviewHandler, frontCameraPreviewHandler, new MediaRecorderSaveHandler(mFile1), new MediaRecorderSaveHandler(mFile2), mDisplayParams, mBackCamera, mFrontCamera));
         currentMode = cameraModes.get(controlPanel.getDefaultMode());
+        f = mContext.getExternalFilesDir(null);
     }
 
     @Override
@@ -148,13 +150,21 @@ public class CameraInteractor implements DefaultLifecycleObserver {
 
     public void capture() {
         if (currentMode.isPhotoMode()) {
+            mPictureFilePath = "Merged_FFC_RFC_" + new SimpleDateFormat("MMddHHmmss").format(new Date()) + ".jpeg";
+            ((IVideoMode) currentMode).setFilePath(mPictureFilePath);
             ((IVideoMode) currentMode).takePicture();
+            controlPanel.setFilePath(f.getAbsolutePath() + "/" + mPictureFilePath);
+            controlPanel.updateThumbNail(true);
         } else {
             IVideoMode currentMode = (IVideoMode) this.currentMode;
             if (currentMode.isRecording()) {
                 currentMode.stopRecording();
+                controlPanel.setFilePath(f.getAbsolutePath() + "/" + mVideoFilePath);
+                controlPanel.updateThumbNail(false);
                 controlPanel.setButtonLabel("Record");
             } else {
+                mVideoFilePath = "Video_FFC_RFC_" + new SimpleDateFormat("MMddHHmmss").format(new Date()) + ".mp4";
+                ((IVideoMode) currentMode).setFilePath(mVideoFilePath);
                 currentMode.startRecording();
                 controlPanel.setButtonLabel("Stop");
             }
@@ -238,7 +248,7 @@ public class CameraInteractor implements DefaultLifecycleObserver {
     private class CaptureCallback extends NoOpCaptureCallback {
         @Override
         public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-            controlPanel.setFilePath(mFile1.toString());
+            //controlPanel.setFilePath(mFile1.toString());
         }
     }
 }

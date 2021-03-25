@@ -19,11 +19,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.Point;
-import android.media.ThumbnailUtils;
 import android.os.Bundle;
-import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,7 +42,6 @@ import com.example.control_panel.ModeSwitchAdapter;
 import com.example.control_panel.ModeSwitchScrollView;
 
 import java.io.File;
-import java.io.IOException;
 
 public class Camera2BasicFragment extends Fragment
         implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
@@ -120,6 +116,7 @@ public class Camera2BasicFragment extends Fragment
                 mModeSwitchBarPoint);
         mModeSwitcher.setEnableSwitchMode(true);
         viewModel = mInteractor.getControlPanel();
+        viewModel.setThumbNailView(mPreview);
         viewModel.observeErrorMessage(getViewLifecycleOwner(), this::showToast);
         viewModel.observeCameraNotAvailable(getViewLifecycleOwner(), this::cameraNotAvailable);
         viewModel.observeSavedFilePath(getViewLifecycleOwner(), this::updateThumbnail);
