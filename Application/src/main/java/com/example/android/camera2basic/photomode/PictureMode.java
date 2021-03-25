@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.hardware.camera2.CameraCaptureSession;
 import android.media.Image;
 import android.media.ImageReader;
@@ -19,6 +20,7 @@ import android.widget.Button;
 import com.example.android.camera2basic.interfaces.ICameraDeviceHolder;
 import com.example.android.camera2basic.interfaces.ICaptureSessionHolder;
 import com.example.android.camera2basic.interfaces.ISessionStateCallback;
+import com.example.android.camera2basic.ui.Camera2BasicFragment;
 import com.example.android.camera2basic.ui.DisplayParams;
 import com.example.android.camera2basic.camera2.CaptureSessionHolder;
 import com.example.android.camera2basic.util.ComboCaptureSessionStateCallback;
@@ -63,6 +65,9 @@ public class PictureMode implements IVideoMode {
     private Bitmap cs;
     private Bitmap ffcBitmap;
     private Bitmap rfcBitmap;
+
+    int finalPhotoWidth = 960;
+    int finalPhotoHeight = 640;
 
     public PictureMode(Context context, IPreviewHandler backPreviewHandler, IPreviewHandler frontPreviewHandler, IVideoSaveHandler backSaveHandler, IVideoSaveHandler frontSaveHandler, DisplayParams displayParams, ICameraDeviceHolder backCamera, ICameraDeviceHolder frontCamera) {
         mContext = context;
@@ -184,10 +189,6 @@ public class PictureMode implements IVideoMode {
                 if (image != null) {
                     ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                     ffcBitmap = fromByteBuffer(buffer);
-
-                    // mergeFrontAndBackCameraFrames
-                     mergeFrontAndBackCameraFrames();
-
                     image.close();
                 }
             } catch (Exception e) {
@@ -213,16 +214,6 @@ public class PictureMode implements IVideoMode {
         }, mBackgroundHandler);
     }
 
-
-
-    private void mergeFrontAndBackCameraFrames() {
-        if (!rfc_bitmap_queue.isEmpty() && !ffc_bitmap_queue.isEmpty()) {
-            Log.d("Sundeep ", "mergeFrontAndBackCameraFrames");
-            ffcBitmap = ffc_bitmap_queue.poll();
-            rfcBitmap = rfc_bitmap_queue.poll();
-        }
-    }
-
     private Bitmap fromByteBuffer(ByteBuffer buffer) {
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes, 0, bytes.length);
@@ -240,11 +231,10 @@ public class PictureMode implements IVideoMode {
 
     private void saveMergedPicture() {
         if (ffcBitmap != null & rfcBitmap != null) {
-            int width = ffcBitmap.getWidth() * 2;
-            int height = ffcBitmap.getHeight();
-            Log.d("vishal ", Integer.toString(ffcBitmap.getByteCount()));
-            Log.d("vishal ", Integer.toString(rfcBitmap.getByteCount()));
-            cs = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            ffcBitmap = getRotatedBitmap(ffcBitmap, ffcBitmap.getWidth(), ffcBitmap.getHeight(), Camera2BasicFragment.mIsZetaHardware ? 90 : 270);
+            rfcBitmap = getRotatedBitmap(rfcBitmap, rfcBitmap.getWidth(), rfcBitmap.getHeight(), 90);
+
+            cs = Bitmap.createBitmap(finalPhotoWidth, finalPhotoHeight, Bitmap.Config.ARGB_8888);
             Canvas comboImage = new Canvas(cs);
             comboImage.drawBitmap(ffcBitmap, 0, 0, null);
             comboImage.drawBitmap(rfcBitmap, ffcBitmap.getWidth(), 0, null);
@@ -261,6 +251,13 @@ public class PictureMode implements IVideoMode {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private Bitmap getRotatedBitmap(Bitmap bitmap, int width, int height, int rotation) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(rotation);
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
+        return Bitmap.createBitmap(scaledBitmap, 0, 0, scaledBitmap.getWidth(), scaledBitmap.getHeight(), matrix, true);
     }
 
     @Override
