@@ -7,6 +7,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.DefaultLifecycleObserver;
@@ -18,13 +19,11 @@ import com.example.android.camera2basic.util.NoOpCaptureSessionStateCallback;
 import com.example.android.camera2basic.util.NoOpStateCallback;
 import com.example.android.camera2basic.interfaces.ICameraDeviceHolder;
 import com.example.android.camera2basic.interfaces.ICameraMode;
-import com.example.android.camera2basic.interfaces.IPhotoMode;
 import com.example.android.camera2basic.interfaces.IPreviewHandler;
 import com.example.android.camera2basic.interfaces.IVideoMode;
 import com.example.android.camera2basic.opengl.CustomGLSurfaceView;
 import com.example.android.camera2basic.photomode.PictureMode;
 import com.example.android.camera2basic.preview.PreviewHandler;
-import com.example.android.camera2basic.savehandlers.ImageSaveHandler;
 import com.example.android.camera2basic.ui.AutoFitTextureView;
 import com.example.android.camera2basic.ui.DisplayParams;
 import com.example.android.camera2basic.videomode.VideoMode;
@@ -35,6 +34,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.stream.Collectors;
 
 public class CameraInteractor implements DefaultLifecycleObserver {
@@ -53,11 +54,15 @@ public class CameraInteractor implements DefaultLifecycleObserver {
     private File mFile2;
     private IPreviewHandler backCameraPreviewHandler;
     private IPreviewHandler frontCameraPreviewHandler;
+    private TextView mTimerText;
+    private Timer mTimer;
+    Integer time = 0, seconds = 0, minutes = 0;
 
     public CameraInteractor(
             Context context,
             AutoFitTextureView backTextureView,
             AutoFitTextureView frontTextureView,
+            TextView timerText,
             DisplayParams displayParams,
             CustomGLSurfaceView customGLSurfaceView,
             ICameraDeviceHolder backCamera,
@@ -66,6 +71,7 @@ public class CameraInteractor implements DefaultLifecycleObserver {
         backCameraPreviewHandler = new PreviewHandler(backTextureView);
         frontCameraPreviewHandler = new PreviewHandler(frontTextureView);
         // previewHandler = new OGLPreviewHandler(customGLSurfaceView);
+        mTimerText = timerText;
         mDisplayParams = displayParams;
         mBackCamera = backCamera;
         mFrontCamera = frontCamera;
@@ -153,12 +159,38 @@ public class CameraInteractor implements DefaultLifecycleObserver {
             IVideoMode currentMode = (IVideoMode) this.currentMode;
             if (currentMode.isRecording()) {
                 currentMode.stopRecording();
+                mTimerText.setText("");
+                mTimer.cancel();
+                time = 0;
                 controlPanel.setButtonLabel("Record");
             } else {
                 currentMode.startRecording();
+                timerTask();
                 controlPanel.setButtonLabel("Stop");
             }
         }
+    }
+
+    private void timerTask(){
+        Timer timer = new Timer();
+        mTimer=timer;
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                seconds = time % 60;
+                minutes = time / 60;
+                String sec = (seconds).toString();
+                if(sec.length()==1) {
+                    sec = "0" + sec;
+                }
+                String min = minutes.toString();
+                if(min.length() == 1){
+                    min = "0"+min;
+                }
+                mTimerText.setText(min+ " :" + sec);
+                time = time +1;
+            }
+        }, 0, 1000);
     }
 
     public ControlPanel getControlPanel() {

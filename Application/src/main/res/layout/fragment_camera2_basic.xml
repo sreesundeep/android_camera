@@ -93,6 +93,7 @@
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="24dp"
             android:contentDescription="@string/description_info"
+
             android:padding="5dp"
             android:src="@drawable/ic_action_info"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -110,6 +111,17 @@
             android:src="@drawable/ic_launcher"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/timer"
+            android:layout_width="100dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="28dp"
+            android:textColor="@color/white"
+            app:layout_constraintBottom_toBottomOf="@+id/preview"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.404" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

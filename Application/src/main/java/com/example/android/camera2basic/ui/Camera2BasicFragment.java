@@ -30,6 +30,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -66,6 +67,7 @@ public class Camera2BasicFragment extends Fragment
     private ModeSwitchScrollView mModeSwitcher;
     private ImageView mModeSwitchBarPoint;
     private CustomGLSurfaceView mGLSurfaceView;
+    private TextView mTimer;
 
     public static Camera2BasicFragment newInstance() {
         return new Camera2BasicFragment();
@@ -87,6 +89,7 @@ public class Camera2BasicFragment extends Fragment
         view.findViewById(R.id.info).setOnClickListener(this);
         mFrontTextureView = view.findViewById(R.id.fronttexture);
         mBackTextureView = view.findViewById(R.id.backtexture);
+        mTimer = view.findViewById(R.id.timer);
 
         // mGLSurfaceView = view.findViewById(R.id.gltexture);
         mButton = view.findViewById(R.id.picture);
@@ -107,7 +110,7 @@ public class Camera2BasicFragment extends Fragment
                 new CameraInteractor(
                         getContext(),
                         mBackTextureView,
-                    mFrontTextureView,
+                    mFrontTextureView,mTimer,
                         new DisplayParams(
                                 getActivity().getWindowManager().getDefaultDisplay().getRotation(),
                                 getResources().getConfiguration().orientation,
