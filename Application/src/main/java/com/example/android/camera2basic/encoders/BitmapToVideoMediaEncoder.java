@@ -5,10 +5,12 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
-import android.media.MediaMuxer;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.example.android.camera2basic.util.DebugUtils;
 
@@ -23,11 +25,8 @@ public class BitmapToVideoMediaEncoder extends com.example.android.camera2basic.
 
     private static final String TAG = "BitmapToVideoDebug";
 
-    //private final IBitmapToVideoEncoderCallback mCallback;
-    private File mOutputFile;
-    private ConcurrentLinkedQueue<Bitmap> mEncodeQueue = new ConcurrentLinkedQueue<>();
-   // private MediaCodec mediaCodec;
-    //private MediaMuxer mediaMuxer;
+    // private MediaCodec mediaCodec;
+    // private MediaMuxer mediaMuxer;
 
     private final Object mFrameSync = new Object();
     private CountDownLatch mNewFrameLatch;
@@ -39,32 +38,16 @@ public class BitmapToVideoMediaEncoder extends com.example.android.camera2basic.
     private static final int I_FRAME_INTERVAL = 1;
 
     private int mGenerateIndex = 0;
-    private int mTrackIndex;
-    private boolean mNoMoreFrames = false;
-    private boolean mAbort = false;
 
     private final int mWidth;
     private final int mHeight;
 
-    HandlerThread mHandlerThread = new HandlerThread("BitmapToVideoConverter");
-    Handler mHandler;
-
-    public interface IBitmapToVideoEncoderCallback {
-        void onEncodingComplete(File outputFile);
-    }
-
-
     public BitmapToVideoMediaEncoder(final MediaMuxerWrapper muxer, final MediaEncoderListener listener, final int width, final int height) {
         super(muxer, listener);
-        if (true) Log.i(TAG, "MediaVideoEncoder: ");
+        Log.i(TAG, "MediaVideoEncoder: ");
         mWidth = width;
         mHeight = height;
         //	mRenderHandler = RenderHandler.createHandler(TAG);
-    }
-
-
-    public int getActiveBitmaps() {
-        return mEncodeQueue.size();
     }
 
 
@@ -103,7 +86,7 @@ public class BitmapToVideoMediaEncoder extends com.example.android.camera2basic.
 
             long TIMEOUT_USEC = 500000;
             int inputBufIndex = mMediaCodec.dequeueInputBuffer(TIMEOUT_USEC);
-            long ptsUsec = computePresentationTime(mGenerateIndex, FRAME_RATE);
+            long ptsUsec = computePresentationTime(mGenerateIndex);
             if (inputBufIndex >= 0) {
                 try {
                     final ByteBuffer inputBuffer = mMediaCodec.getInputBuffer(inputBufIndex);
@@ -120,9 +103,9 @@ public class BitmapToVideoMediaEncoder extends com.example.android.camera2basic.
     }
 
     @Override
-    void prepare() throws IOException {
+    void prepare() {
 
-        MediaCodecInfo codecInfo = selectCodec(MIME_TYPE);
+        MediaCodecInfo codecInfo = selectCodec();
         if (codecInfo == null) {
             Log.e(TAG, "Unable to find an appropriate codec for " + MIME_TYPE);
             return;
@@ -130,7 +113,7 @@ public class BitmapToVideoMediaEncoder extends com.example.android.camera2basic.
         Log.d(TAG, "found codec: " + codecInfo.getName());
         int colorFormat;
         try {
-            colorFormat = selectColorFormat(codecInfo, MIME_TYPE);
+            colorFormat = selectColorFormat(codecInfo);
         } catch (Exception e) {
             colorFormat = MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
         }
@@ -151,22 +134,23 @@ public class BitmapToVideoMediaEncoder extends com.example.android.camera2basic.
         mMediaCodec.start();
     }
 
-//    private void release() {
-//        if (mediaCodec != null) {
-//            mediaCodec.stop();
-//            mediaCodec.release();
-//            mediaCodec = null;
-//            Log.d(TAG, "RELEASE CODEC");
-//        }
-//        if (mediaMuxer != null) {
-//            mediaMuxer.stop();
-//            mediaMuxer.release();
-//            mediaMuxer = null;
-//            Log.d(TAG, "RELEASE MUXER");
-//        }
-//    }
+    //    private void release() {
+    //        if (mediaCodec != null) {
+    //            mediaCodec.stop();
+    //            mediaCodec.release();
+    //            mediaCodec = null;
+    //            Log.d(TAG, "RELEASE CODEC");
+    //        }
+    //        if (mediaMuxer != null) {
+    //            mediaMuxer.stop();
+    //            mediaMuxer.release();
+    //            mediaMuxer = null;
+    //            Log.d(TAG, "RELEASE MUXER");
+    //        }
+    //    }
 
-    private static MediaCodecInfo selectCodec(String mimeType) {
+    @Nullable
+    private static MediaCodecInfo selectCodec() {
         int numCodecs = MediaCodecList.getCodecCount();
         for (int i = 0; i < numCodecs; i++) {
             MediaCodecInfo codecInfo = MediaCodecList.getCodecInfoAt(i);
@@ -175,7 +159,8 @@ public class BitmapToVideoMediaEncoder extends com.example.android.camera2basic.
             }
             String[] types = codecInfo.getSupportedTypes();
             for (String type : types) {
-                if (type.equalsIgnoreCase(mimeType)) {
+                if (type.equalsIgnoreCase(BitmapToVideoMediaEncoder.MIME_TYPE)
+                        && codecInfo.getName().contains("qcom")) {
                     return codecInfo;
                 }
             }
@@ -183,8 +168,9 @@ public class BitmapToVideoMediaEncoder extends com.example.android.camera2basic.
         return null;
     }
 
-    private static int selectColorFormat(MediaCodecInfo codecInfo, String mimeType) {
-        MediaCodecInfo.CodecCapabilities capabilities = codecInfo.getCapabilitiesForType(mimeType);
+    private static int selectColorFormat(@NonNull MediaCodecInfo codecInfo) {
+        MediaCodecInfo.CodecCapabilities capabilities =
+                codecInfo.getCapabilitiesForType(BitmapToVideoMediaEncoder.MIME_TYPE);
         DebugUtils.log("ColorFormats: " + Arrays.toString(capabilities.colorFormats));
         for (int i = 0; i < capabilities.colorFormats.length; i++) {
             int colorFormat = capabilities.colorFormats[i];
@@ -196,20 +182,12 @@ public class BitmapToVideoMediaEncoder extends com.example.android.camera2basic.
     }
 
     private static boolean isRecognizedFormat(int colorFormat) {
-        switch (colorFormat) {
-                // these are the formats we know how to handle for
-            case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar:
-            case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420PackedPlanar:
-            case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar:
-            case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420PackedSemiPlanar:
-            case MediaCodecInfo.CodecCapabilities.COLOR_TI_FormatYUV420PackedSemiPlanar:
-                return true;
-            default:
-                return false;
-        }
+        // these are the formats we know how to handle for
+        return colorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
     }
 
-    private byte[] getNV21(int inputWidth, int inputHeight, Bitmap scaled) {
+    @NonNull
+    private byte[] getNV21(int inputWidth, int inputHeight, @NonNull Bitmap scaled) {
 
         int[] argb = new int[inputWidth * inputHeight];
 
@@ -217,7 +195,6 @@ public class BitmapToVideoMediaEncoder extends com.example.android.camera2basic.
 
         byte[] yuv = new byte[inputWidth * inputHeight * 3 / 2];
         encodeYUV420SP(yuv, argb, inputWidth, inputHeight);
-
         scaled.recycle();
 
         return yuv;
@@ -254,7 +231,7 @@ public class BitmapToVideoMediaEncoder extends com.example.android.camera2basic.
         }
     }
 
-    private long computePresentationTime(long frameIndex, int framerate) {
-        return 132 + frameIndex * 1000000 / framerate;
+    private long computePresentationTime(long frameIndex) {
+        return 132 + frameIndex * 1000000 / BitmapToVideoMediaEncoder.FRAME_RATE;
     }
 }
